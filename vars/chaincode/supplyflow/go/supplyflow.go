@@ -94,8 +94,6 @@ type RetailerPrivateOrder struct {
 	InvoiceID	int		`json:"InvoiceID"`
 }
 
-
-
 type SmartContract struct {
 	contractapi.Contract
 }
@@ -132,7 +130,8 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 	}
 
 	// ==== Check if order already exists ====
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionBarleyOrders", orderInput.BarleyOrderID)
+	OrderID := ("BARLEY"+orderInput.BarleyOrderID) 
+	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionBarleyOrders", OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -155,7 +154,7 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionBarleyOrders", orderInput.BarleyOrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -171,6 +170,8 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
+	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
+	//TODO: Limit to check the producer field of the Supplier.
 	if msp == "supplier-supply-com" {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
@@ -195,6 +196,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
+		OrderID := ("BARLEY"+ OrderInput.BarleyOrderID) 
 
 		if len(OrderInput.BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -206,7 +208,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionBarleyOrders", OrderInput.BarleyOrderID)
+		orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
 		if err != nil {
 			return fmt.Errorf("Failed to get order:" + err.Error())
 		} else if orderAsBytes == nil {
@@ -222,7 +224,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		orderToUpdate.Status = (OrderInput.Status)
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionBarleyOrders", orderToUpdate.BarleyOrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -239,13 +241,17 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			return fmt.Errorf(err.Error())
 		}
 
-		//TODO SETUP IF STATEMENT FOR OTHER PRODUCER
-		
-		err = ctx.GetStub().PutPrivateData("collectionPrivateProducer1-Orders", OrderInput.BarleyOrderID, orderPrivJSONasBytes)
+		//TODO: SETUP IF STATEMENT FOR OTHER PRODUCER TO CONTROL ACCESS TO BOTH PRIVATE STATES
+		//If Prod 1
+		err = ctx.GetStub().PutPrivateData("collectionPrivateProducer1-Orders", OrderID, orderPrivJSONasBytes)
+		//If Prod 2
+
+		//err = ctx.GetStub().PutPrivateData("collectionPrivateProducer2-Orders", OrderID, orderPrivJSONasBytes)
 		if err != nil {
 			return fmt.Errorf("failed to put Order: %s", err.Error())
 		}
 
+		//ELSE ERROR
 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
@@ -253,10 +259,96 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 	return nil
 }
 
+func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) error {
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
+	//TODO: Limit to check the producer field of the Supplier.
+	if msp == "supplier-supply-com" {
+		
+		if len(BarleyOrderID) == 0 {
+			return fmt.Errorf("ID field must be a non-empty string")
+		}
+
+		OrderID := ("BARLEY"+BarleyOrderID) 
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		if err != nil {
+			return fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return fmt.Errorf("%s does not exist", BarleyOrderID)
+		}
+
+		orderToUpdate := BarleyOrder{}
+		err = json.Unmarshal(orderJSON, &orderToUpdate) 
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+		
+		orderToUpdate.Status = "Shipped"
+
+		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		return fmt.Errorf("Wrong MSP - Access Deinied")
+	}
+	return nil
+}
+
+func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string, Accepted string) error {
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+	//TODO: SET FOR MILLER MSP
+	if msp == "supplier-supply-com" {
+		
+		if len(BarleyOrderID) == 0 {
+			return fmt.Errorf("ID field must be a non-empty string")
+		}
+		
+		OrderID := ("BARLEY"+BarleyOrderID) 
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		if err != nil {
+			return fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return fmt.Errorf("%s does not exist", BarleyOrderID)
+		}
+
+		orderToUpdate := BarleyOrder{}
+		err = json.Unmarshal(orderJSON, &orderToUpdate) 
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+		
+		orderToUpdate.Status = "Delivered"
+		orderToUpdate.Accepted = Accepted
+
+		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		return fmt.Errorf("Wrong MSP - Access Deinied")
+	}
+	return nil
+}
 
 func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyOrder, error) {
 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionBarleyOrders", BarleyOrderID)
+	OrderID := ("BARLEY"+BarleyOrderID) 
+	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -268,7 +360,24 @@ func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterf
 	_ = json.Unmarshal(orderJSON, order)
 
 	return order, nil
+}
 
+func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyPrivateOrder, error) {
+
+	//TODO:  FILTER THIS FOR THE CORRECT SUPPLIER. IF ITS DISTILLERY, CHECK BOTH COLLECTIONS AND ONLY RETURN THE TRUE ONE
+	OrderID := ("BARLEY"+BarleyOrderID) 
+	orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from order %s", err.Error())
+	}
+	if orderJSON == nil {
+		return nil, fmt.Errorf("%s does not exist", BarleyOrderID)
+	}
+
+	Privorder := new(BarleyPrivateOrder)
+	_ = json.Unmarshal(orderJSON, Privorder)
+
+	return Privorder, nil
 }
 
 func main() {
