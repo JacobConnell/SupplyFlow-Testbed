@@ -1,0 +1,462 @@
+---
+# ROOTPATH should be set to the absolute path of crypto material starting directory
+# for example: export ROOTPATH=/home/ubuntu/mywork/vars/keyfiles
+"name": "supplychain"
+"x-type": "hlfv-2.3.0"
+"version": "1.0.0"
+"client":
+  "organization": "supplier.supply.com"
+  "cryptoconfig":
+    "path": "${ROOTPATH}"
+  "connection":
+    "timeout":
+      "peer":
+        "endorser": "300"
+        "eventHub": "300"
+        "eventReg": "300"
+      "orderer": "300"
+  "credentialStore":
+    "path": "/tmp/state-store"
+    "cryptoStore":
+      "path": "/tmp/msp"
+  "BCCSP":
+    "security":
+      "enabled": "true"
+      "default":
+        "provider": "SW"
+      "hashAlgorithm": "SHA2"
+      "softVerify": "true"
+      "level": "256"
+
+"channels":
+  "supplychain":
+    "orderers":
+    - "orderer1.supply.com"
+    - "orderer2.supply.com"
+    - "orderer3.supply.com"
+    "peers":
+      "peer1.distillery.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+      "peer2.distillery.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+      "peer1.shop.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+      "peer2.shop.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+      "peer1.supplier.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+      "peer2.supplier.supply.com":
+        "endorsingPeer": true
+        "chaincodeQuery": true
+        "eventSource": true
+
+"organizations":
+  "distillery.supply.com":
+    "mspid": "distillery-supply-com"
+    "cryptoPath": "peerOrganizations/distillery.supply.com/users/{username}@distillery.supply.com/msp"
+    "peers":
+    - "peer1.distillery.supply.com"
+    - "peer2.distillery.supply.com"
+    "certificateAuthorities":
+    - "ca1.distillery.supply.com"
+  "shop.supply.com":
+    "mspid": "shop-supply-com"
+    "cryptoPath": "peerOrganizations/shop.supply.com/users/{username}@shop.supply.com/msp"
+    "peers":
+    - "peer1.shop.supply.com"
+    - "peer2.shop.supply.com"
+    "certificateAuthorities":
+    - "ca1.shop.supply.com"
+  "supplier.supply.com":
+    "mspid": "supplier-supply-com"
+    "cryptoPath": "peerOrganizations/supplier.supply.com/users/{username}@supplier.supply.com/msp"
+    "peers":
+    - "peer1.supplier.supply.com"
+    - "peer2.supplier.supply.com"
+    "certificateAuthorities":
+    - "ca1.supplier.supply.com"
+  "supply.com":
+    "mspid": "supply-com"
+    "cryptoPath": "ordererOrganizations/supply.com/users/{username}@supply.com/msp"
+    "orderers":
+    - "orderer1.supply.com"
+    - "orderer2.supply.com"
+    - "orderer3.supply.com"
+    "certificateAuthorities":
+
+"orderers":
+  "orderer1.supply.com":
+    "url": "grpcs://orderer1.supply.com:7050"
+    "grpcOptions":
+      "ssl-target-name-override": "orderer1.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIICnTCCAkKgAwIBAgIUBVBQ4phw1c7vgUrodD4UCweCeLIwCgYIKoZIzj0EAwIw
+        aDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5z
+        dXBwbHkuY29tMB4XDTIyMDMxMzIxMTMwN1oXDTMyMDMxMDIxMTMwN1owaDELMAkG
+        A1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQHDAdSYWxl
+        aWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5zdXBwbHku
+        Y29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDrTTK/Wbp1FUSvTsvFeZNFag
+        eFRJQNs7WrHClra/WyBoIlda91jgKLsbfkrxStDjbF+unvM+8KFdvvgDxBT2jqOB
+        yTCBxjAdBgNVHQ4EFgQURvH5sRygLJITUBYjemNSaB+NTmMwHwYDVR0jBBgwFoAU
+        RvH5sRygLJITUBYjemNSaB+NTmMwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8E
+        BAMCAaYwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMEQGA1UdEQQ9MDuH
+        BMCoAQmCEHRsc2NhLnN1cHBseS5jb22CEHRsc2NhLXN1cHBseS1jb22CCWxvY2Fs
+        aG9zdIcEfwAAATAKBggqhkjOPQQDAgNJADBGAiEAyx+p8og98q00bLrcMUYZP5jE
+        FwqoQox6xcBlrhVGlw0CIQDdca1mwDaAjIskWqX/GXfM79LMlstQzc8REhFGWbw+
+        bA==
+        -----END CERTIFICATE-----
+
+  "orderer2.supply.com":
+    "url": "grpcs://orderer2.supply.com:7050"
+    "grpcOptions":
+      "ssl-target-name-override": "orderer2.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIICnTCCAkKgAwIBAgIUBVBQ4phw1c7vgUrodD4UCweCeLIwCgYIKoZIzj0EAwIw
+        aDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5z
+        dXBwbHkuY29tMB4XDTIyMDMxMzIxMTMwN1oXDTMyMDMxMDIxMTMwN1owaDELMAkG
+        A1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQHDAdSYWxl
+        aWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5zdXBwbHku
+        Y29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDrTTK/Wbp1FUSvTsvFeZNFag
+        eFRJQNs7WrHClra/WyBoIlda91jgKLsbfkrxStDjbF+unvM+8KFdvvgDxBT2jqOB
+        yTCBxjAdBgNVHQ4EFgQURvH5sRygLJITUBYjemNSaB+NTmMwHwYDVR0jBBgwFoAU
+        RvH5sRygLJITUBYjemNSaB+NTmMwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8E
+        BAMCAaYwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMEQGA1UdEQQ9MDuH
+        BMCoAQmCEHRsc2NhLnN1cHBseS5jb22CEHRsc2NhLXN1cHBseS1jb22CCWxvY2Fs
+        aG9zdIcEfwAAATAKBggqhkjOPQQDAgNJADBGAiEAyx+p8og98q00bLrcMUYZP5jE
+        FwqoQox6xcBlrhVGlw0CIQDdca1mwDaAjIskWqX/GXfM79LMlstQzc8REhFGWbw+
+        bA==
+        -----END CERTIFICATE-----
+
+  "orderer3.supply.com":
+    "url": "grpcs://orderer3.supply.com:7050"
+    "grpcOptions":
+      "ssl-target-name-override": "orderer3.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIICnTCCAkKgAwIBAgIUBVBQ4phw1c7vgUrodD4UCweCeLIwCgYIKoZIzj0EAwIw
+        aDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5z
+        dXBwbHkuY29tMB4XDTIyMDMxMzIxMTMwN1oXDTMyMDMxMDIxMTMwN1owaDELMAkG
+        A1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQHDAdSYWxl
+        aWdoMRMwEQYDVQQKDApzdXBwbHkuY29tMRkwFwYDVQQDDBB0bHNjYS5zdXBwbHku
+        Y29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDrTTK/Wbp1FUSvTsvFeZNFag
+        eFRJQNs7WrHClra/WyBoIlda91jgKLsbfkrxStDjbF+unvM+8KFdvvgDxBT2jqOB
+        yTCBxjAdBgNVHQ4EFgQURvH5sRygLJITUBYjemNSaB+NTmMwHwYDVR0jBBgwFoAU
+        RvH5sRygLJITUBYjemNSaB+NTmMwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8E
+        BAMCAaYwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMEQGA1UdEQQ9MDuH
+        BMCoAQmCEHRsc2NhLnN1cHBseS5jb22CEHRsc2NhLXN1cHBseS1jb22CCWxvY2Fs
+        aG9zdIcEfwAAATAKBggqhkjOPQQDAgNJADBGAiEAyx+p8og98q00bLrcMUYZP5jE
+        FwqoQox6xcBlrhVGlw0CIQDdca1mwDaAjIskWqX/GXfM79LMlstQzc8REhFGWbw+
+        bA==
+        -----END CERTIFICATE-----
+
+"peers":
+  "peer1.distillery.supply.com":
+    "url": "grpcs://peer1.distillery.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer1.distillery.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIIC4jCCAoigAwIBAgIUGAjnwYmHSTZBLKwz+vg9LocIJFowCgYIKoZIzj0EAwIw
+        fzELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMR4wHAYDVQQKDBVkaXN0aWxsZXJ5LnN1cHBseS5jb20xJTAjBgNV
+        BAMMHHRsc2NhMS5kaXN0aWxsZXJ5LnN1cHBseS5jb20wHhcNMjIwMzEzMjExMTE5
+        WhcNMzIwMzEwMjExMTE5WjB/MQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGgg
+        Q2Fyb2xpbmExEDAOBgNVBAcMB1JhbGVpZ2gxHjAcBgNVBAoMFWRpc3RpbGxlcnku
+        c3VwcGx5LmNvbTElMCMGA1UEAwwcdGxzY2ExLmRpc3RpbGxlcnkuc3VwcGx5LmNv
+        bTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABBBN+urJJOVtplgC2EZE6qDE2BlF
+        QV1Z8XkzMp5evDVCxn4a6dmkkwBu2/cQPHWF2+y33bmxAXxl4psJhqrXymqjgeEw
+        gd4wHQYDVR0OBBYEFO8qIjWGCq3CAv6phNNnCvyVHUY4MB8GA1UdIwQYMBaAFO8q
+        IjWGCq3CAv6phNNnCvyVHUY4MA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQD
+        AgGmMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBcBgNVHREEVTBThwTA
+        qAEJghx0bHNjYTEuZGlzdGlsbGVyeS5zdXBwbHkuY29tghx0bHNjYTEtZGlzdGls
+        bGVyeS1zdXBwbHktY29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSAAw
+        RQIgURS5ugHy0ffdAGvAd1x5N/jaR427LoaiUhdLX+xdzOECIQDNJ61FcjKqYLdP
+        3iJYD2dGLQ0iptmFU9goV//duCr81w==
+        -----END CERTIFICATE-----
+
+  "peer2.distillery.supply.com":
+    "url": "grpcs://peer2.distillery.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer2.distillery.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIIC4jCCAoigAwIBAgIUGAjnwYmHSTZBLKwz+vg9LocIJFowCgYIKoZIzj0EAwIw
+        fzELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMR4wHAYDVQQKDBVkaXN0aWxsZXJ5LnN1cHBseS5jb20xJTAjBgNV
+        BAMMHHRsc2NhMS5kaXN0aWxsZXJ5LnN1cHBseS5jb20wHhcNMjIwMzEzMjExMTE5
+        WhcNMzIwMzEwMjExMTE5WjB/MQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGgg
+        Q2Fyb2xpbmExEDAOBgNVBAcMB1JhbGVpZ2gxHjAcBgNVBAoMFWRpc3RpbGxlcnku
+        c3VwcGx5LmNvbTElMCMGA1UEAwwcdGxzY2ExLmRpc3RpbGxlcnkuc3VwcGx5LmNv
+        bTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABBBN+urJJOVtplgC2EZE6qDE2BlF
+        QV1Z8XkzMp5evDVCxn4a6dmkkwBu2/cQPHWF2+y33bmxAXxl4psJhqrXymqjgeEw
+        gd4wHQYDVR0OBBYEFO8qIjWGCq3CAv6phNNnCvyVHUY4MB8GA1UdIwQYMBaAFO8q
+        IjWGCq3CAv6phNNnCvyVHUY4MA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQD
+        AgGmMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBcBgNVHREEVTBThwTA
+        qAEJghx0bHNjYTEuZGlzdGlsbGVyeS5zdXBwbHkuY29tghx0bHNjYTEtZGlzdGls
+        bGVyeS1zdXBwbHktY29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSAAw
+        RQIgURS5ugHy0ffdAGvAd1x5N/jaR427LoaiUhdLX+xdzOECIQDNJ61FcjKqYLdP
+        3iJYD2dGLQ0iptmFU9goV//duCr81w==
+        -----END CERTIFICATE-----
+
+  "peer1.shop.supply.com":
+    "url": "grpcs://peer1.shop.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer1.shop.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIICvzCCAmSgAwIBAgIUavE2j7zbg/s/rRSABQ3A8Rz4drAwCgYIKoZIzj0EAwIw
+        czELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRgwFgYDVQQKDA9zaG9wLnN1cHBseS5jb20xHzAdBgNVBAMMFnRs
+        c2NhMS5zaG9wLnN1cHBseS5jb20wHhcNMjIwMzEzMjExMjAwWhcNMzIwMzEwMjEx
+        MjAwWjBzMQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fyb2xpbmExEDAO
+        BgNVBAcMB1JhbGVpZ2gxGDAWBgNVBAoMD3Nob3Auc3VwcGx5LmNvbTEfMB0GA1UE
+        AwwWdGxzY2ExLnNob3Auc3VwcGx5LmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEH
+        A0IABIxuXTs5dP7A2bZUzlXPxkH+nDXe8W/sga7E++Epql9gYcRP5dKCRXDKKE8b
+        hB0Ze6ELB2UOKeS+vihJFebZw1qjgdUwgdIwHQYDVR0OBBYEFAE2UHKCfCOc15te
+        6A6OZcPE4sS3MB8GA1UdIwQYMBaAFAE2UHKCfCOc15te6A6OZcPE4sS3MA8GA1Ud
+        EwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQGCCsGAQUFBwMB
+        BggrBgEFBQcDAjBQBgNVHREESTBHhwTAqAEJghZ0bHNjYTEuc2hvcC5zdXBwbHku
+        Y29tghZ0bHNjYTEtc2hvcC1zdXBwbHktY29tgglsb2NhbGhvc3SHBH8AAAEwCgYI
+        KoZIzj0EAwIDSQAwRgIhAKYNxV8b2tsjGY5+DwHnIoPHkAJJU5coyA8vXk1DqctU
+        AiEA/BiKeRRTO7HhigCSwPvLicoTTYqsiiN5iJo4zHRSRXg=
+        -----END CERTIFICATE-----
+
+  "peer2.shop.supply.com":
+    "url": "grpcs://peer2.shop.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer2.shop.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIICvzCCAmSgAwIBAgIUavE2j7zbg/s/rRSABQ3A8Rz4drAwCgYIKoZIzj0EAwIw
+        czELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRgwFgYDVQQKDA9zaG9wLnN1cHBseS5jb20xHzAdBgNVBAMMFnRs
+        c2NhMS5zaG9wLnN1cHBseS5jb20wHhcNMjIwMzEzMjExMjAwWhcNMzIwMzEwMjEx
+        MjAwWjBzMQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fyb2xpbmExEDAO
+        BgNVBAcMB1JhbGVpZ2gxGDAWBgNVBAoMD3Nob3Auc3VwcGx5LmNvbTEfMB0GA1UE
+        AwwWdGxzY2ExLnNob3Auc3VwcGx5LmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEH
+        A0IABIxuXTs5dP7A2bZUzlXPxkH+nDXe8W/sga7E++Epql9gYcRP5dKCRXDKKE8b
+        hB0Ze6ELB2UOKeS+vihJFebZw1qjgdUwgdIwHQYDVR0OBBYEFAE2UHKCfCOc15te
+        6A6OZcPE4sS3MB8GA1UdIwQYMBaAFAE2UHKCfCOc15te6A6OZcPE4sS3MA8GA1Ud
+        EwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQGCCsGAQUFBwMB
+        BggrBgEFBQcDAjBQBgNVHREESTBHhwTAqAEJghZ0bHNjYTEuc2hvcC5zdXBwbHku
+        Y29tghZ0bHNjYTEtc2hvcC1zdXBwbHktY29tgglsb2NhbGhvc3SHBH8AAAEwCgYI
+        KoZIzj0EAwIDSQAwRgIhAKYNxV8b2tsjGY5+DwHnIoPHkAJJU5coyA8vXk1DqctU
+        AiEA/BiKeRRTO7HhigCSwPvLicoTTYqsiiN5iJo4zHRSRXg=
+        -----END CERTIFICATE-----
+
+  "peer1.supplier.supply.com":
+    "url": "grpcs://peer1.supplier.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer1.supplier.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIIC1TCCAnygAwIBAgIUDe378ojm8LfDaOMR4fdCsZiLvEgwCgYIKoZIzj0EAwIw
+        ezELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRwwGgYDVQQKDBNzdXBwbGllci5zdXBwbHkuY29tMSMwIQYDVQQD
+        DBp0bHNjYTEuc3VwcGxpZXIuc3VwcGx5LmNvbTAeFw0yMjAzMTMyMTEyMzRaFw0z
+        MjAzMTAyMTEyMzRaMHsxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJv
+        bGluYTEQMA4GA1UEBwwHUmFsZWlnaDEcMBoGA1UECgwTc3VwcGxpZXIuc3VwcGx5
+        LmNvbTEjMCEGA1UEAwwadGxzY2ExLnN1cHBsaWVyLnN1cHBseS5jb20wWTATBgcq
+        hkjOPQIBBggqhkjOPQMBBwNCAARghcxtwP6mn8zVaZgMSlraAUnFGjLxoK6X5hp8
+        jx7tnnsfxnXcE7m3c/Kjg8Ywt2QlJiSpWQ+bCuJw489f9ve+o4HdMIHaMB0GA1Ud
+        DgQWBBR7rJUl0nbrI3PronBSASUWmGtetzAfBgNVHSMEGDAWgBR7rJUl0nbrI3Pr
+        onBSASUWmGtetzAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBpjAdBgNV
+        HSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwWAYDVR0RBFEwT4cEwKgBCYIadGxz
+        Y2ExLnN1cHBsaWVyLnN1cHBseS5jb22CGnRsc2NhMS1zdXBwbGllci1zdXBwbHkt
+        Y29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDRwAwRAIgc2K8brrvau7D
+        unEm9L2wmweZmQUptOhg3rStbpWZltECIELVjIP25Pf8RAtSNpY0GkjfbY0vyjy/
+        rytqXncaJI25
+        -----END CERTIFICATE-----
+
+  "peer2.supplier.supply.com":
+    "url": "grpcs://peer2.supplier.supply.com:7051"
+    "grpcOptions":
+      "ssl-target-name-override": "peer2.supplier.supply.com"
+    "tlsCACerts":
+      "pem": |
+        -----BEGIN CERTIFICATE-----
+        MIIC1TCCAnygAwIBAgIUDe378ojm8LfDaOMR4fdCsZiLvEgwCgYIKoZIzj0EAwIw
+        ezELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRwwGgYDVQQKDBNzdXBwbGllci5zdXBwbHkuY29tMSMwIQYDVQQD
+        DBp0bHNjYTEuc3VwcGxpZXIuc3VwcGx5LmNvbTAeFw0yMjAzMTMyMTEyMzRaFw0z
+        MjAzMTAyMTEyMzRaMHsxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJv
+        bGluYTEQMA4GA1UEBwwHUmFsZWlnaDEcMBoGA1UECgwTc3VwcGxpZXIuc3VwcGx5
+        LmNvbTEjMCEGA1UEAwwadGxzY2ExLnN1cHBsaWVyLnN1cHBseS5jb20wWTATBgcq
+        hkjOPQIBBggqhkjOPQMBBwNCAARghcxtwP6mn8zVaZgMSlraAUnFGjLxoK6X5hp8
+        jx7tnnsfxnXcE7m3c/Kjg8Ywt2QlJiSpWQ+bCuJw489f9ve+o4HdMIHaMB0GA1Ud
+        DgQWBBR7rJUl0nbrI3PronBSASUWmGtetzAfBgNVHSMEGDAWgBR7rJUl0nbrI3Pr
+        onBSASUWmGtetzAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBpjAdBgNV
+        HSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwWAYDVR0RBFEwT4cEwKgBCYIadGxz
+        Y2ExLnN1cHBsaWVyLnN1cHBseS5jb22CGnRsc2NhMS1zdXBwbGllci1zdXBwbHkt
+        Y29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDRwAwRAIgc2K8brrvau7D
+        unEm9L2wmweZmQUptOhg3rStbpWZltECIELVjIP25Pf8RAtSNpY0GkjfbY0vyjy/
+        rytqXncaJI25
+        -----END CERTIFICATE-----
+
+"certificateAuthorities":
+  "ca1.distillery.supply.com":
+    "url": "https://ca1.distillery.supply.com:7054"
+    "tlsCACerts":
+      "pem":
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIIC1zCCAnygAwIBAgIUOiMwbbA+kmOUFyNwMfhmUaBBfUowCgYIKoZIzj0EAwIw
+        fDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMR4wHAYDVQQKDBVkaXN0aWxsZXJ5LnN1cHBseS5jb20xIjAgBgNV
+        BAMMGWNhMS5kaXN0aWxsZXJ5LnN1cHBseS5jb20wHhcNMjIwMzEzMjExMTE5WhcN
+        MzIwMzEwMjExMTE5WjB8MQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fy
+        b2xpbmExEDAOBgNVBAcMB1JhbGVpZ2gxHjAcBgNVBAoMFWRpc3RpbGxlcnkuc3Vw
+        cGx5LmNvbTEiMCAGA1UEAwwZY2ExLmRpc3RpbGxlcnkuc3VwcGx5LmNvbTBZMBMG
+        ByqGSM49AgEGCCqGSM49AwEHA0IABC5Q85oilCgqbZzLRsFFgbNjesnpKFwyh1OS
+        /RwXwlUdzmhQ/lxPOlMBDqfFiU1sdpBF/caYzjQrnFHjCvU48bSjgdswgdgwHQYD
+        VR0OBBYEFEuceXMMc7JMB1SswLh/4VVylkkzMB8GA1UdIwQYMBaAFEuceXMMc7JM
+        B1SswLh/4VVylkkzMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGmMB0G
+        A1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBWBgNVHREETzBNhwTAqAEJghlj
+        YTEuZGlzdGlsbGVyeS5zdXBwbHkuY29tghljYTEtZGlzdGlsbGVyeS1zdXBwbHkt
+        Y29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSQAwRgIhAKrXiJdokcZ/
+        I3MPLPeHrofnes4JJ8nQcN+5dZr62dRJAiEAyEKXvnCGfVAh35O+veruTxKDb2Xp
+        wOo1ZaU1jHOCiuI=
+        -----END CERTIFICATE-----
+
+    "httpOptions":
+      "verify": "false"
+    "caName": "ca1"
+    "registrar":
+      "enrollId": "admin"
+      "enrollSecret": "adminpw"
+  "ca1.shop.supply.com":
+    "url": "https://ca1.shop.supply.com:7054"
+    "tlsCACerts":
+      "pem":
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIICsjCCAligAwIBAgIUY3/gcTsM9oXBBFI4MWnjkDHmyXowCgYIKoZIzj0EAwIw
+        cDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRgwFgYDVQQKDA9zaG9wLnN1cHBseS5jb20xHDAaBgNVBAMME2Nh
+        MS5zaG9wLnN1cHBseS5jb20wHhcNMjIwMzEzMjExMjAwWhcNMzIwMzEwMjExMjAw
+        WjBwMQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fyb2xpbmExEDAOBgNV
+        BAcMB1JhbGVpZ2gxGDAWBgNVBAoMD3Nob3Auc3VwcGx5LmNvbTEcMBoGA1UEAwwT
+        Y2ExLnNob3Auc3VwcGx5LmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABI+C
+        l6rxgV9kcFtH2udJ9F38wIwGDO9lUn/jTLnXKHhOG9cPjkWbm3RNTkxbxtZacJGt
+        l8+k+8R4Ls2D198Ah36jgc8wgcwwHQYDVR0OBBYEFEASwf5FhohYrtdsiDm7iJZl
+        KyR1MB8GA1UdIwQYMBaAFEASwf5FhohYrtdsiDm7iJZlKyR1MA8GA1UdEwEB/wQF
+        MAMBAf8wDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF
+        BQcDAjBKBgNVHREEQzBBhwTAqAEJghNjYTEuc2hvcC5zdXBwbHkuY29tghNjYTEt
+        c2hvcC1zdXBwbHktY29tgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSAAw
+        RQIgX8poPFhyOoc8T+PrDMTX5g9BvGyae+JzbLit3JAHX0UCIQD5sk9j9ceRfem+
+        iipDybLOMmXtPeA9D9M8Mo+jTGqgsQ==
+        -----END CERTIFICATE-----
+
+    "httpOptions":
+      "verify": "false"
+    "caName": "ca1"
+    "registrar":
+      "enrollId": "admin"
+      "enrollSecret": "adminpw"
+  "ca1.supplier.supply.com":
+    "url": "https://ca1.supplier.supply.com:7054"
+    "tlsCACerts":
+      "pem":
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIICyTCCAnCgAwIBAgIUP/F4UEONar7umDKOXROi7gBzY9EwCgYIKoZIzj0EAwIw
+        eDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYDVQQH
+        DAdSYWxlaWdoMRwwGgYDVQQKDBNzdXBwbGllci5zdXBwbHkuY29tMSAwHgYDVQQD
+        DBdjYTEuc3VwcGxpZXIuc3VwcGx5LmNvbTAeFw0yMjAzMTMyMTEyMzRaFw0zMjAz
+        MTAyMTEyMzRaMHgxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGlu
+        YTEQMA4GA1UEBwwHUmFsZWlnaDEcMBoGA1UECgwTc3VwcGxpZXIuc3VwcGx5LmNv
+        bTEgMB4GA1UEAwwXY2ExLnN1cHBsaWVyLnN1cHBseS5jb20wWTATBgcqhkjOPQIB
+        BggqhkjOPQMBBwNCAAQFUD5bpjVP4RGNHKG6o0/nj5cL+6RpDsVCukYtaFnv/aNI
+        HMWc4+kHHJwe0yzFyMPK2gCTxybqbNakZAhT0W+ao4HXMIHUMB0GA1UdDgQWBBRY
+        I/usr8X6u8rsFWxxzBigeTyBKDAfBgNVHSMEGDAWgBRYI/usr8X6u8rsFWxxzBig
+        eTyBKDAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAU
+        BggrBgEFBQcDAQYIKwYBBQUHAwIwUgYDVR0RBEswSYcEwKgBCYIXY2ExLnN1cHBs
+        aWVyLnN1cHBseS5jb22CF2NhMS1zdXBwbGllci1zdXBwbHktY29tgglsb2NhbGhv
+        c3SHBH8AAAEwCgYIKoZIzj0EAwIDRwAwRAIgMmk+Yi99Yj3p7Z3oQ2Vg37KG5KHg
+        DFGfIEOCrgH6lSQCICD15iKV8ISZq2QfnkYztoDmEifzyY3TB+hl91AoNQmR
+        -----END CERTIFICATE-----
+
+    "httpOptions":
+      "verify": "false"
+    "caName": "ca1"
+    "registrar":
+      "enrollId": "admin"
+      "enrollSecret": "adminpw"
+
+"entityMatchers":
+  "orderer":
+  - "mappedHost": "orderer1.supply.com"
+    "pattern": "(\\w*)orderer1.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "orderer1.supply.com"
+    "urlSubstitutionExp": "orderer1.supply.com:7050"
+  - "mappedHost": "orderer2.supply.com"
+    "pattern": "(\\w*)orderer2.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "orderer2.supply.com"
+    "urlSubstitutionExp": "orderer2.supply.com:7050"
+  - "mappedHost": "orderer3.supply.com"
+    "pattern": "(\\w*)orderer3.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "orderer3.supply.com"
+    "urlSubstitutionExp": "orderer3.supply.com:7050"
+  
+  "peer":
+  - "mappedHost": "peer1.distillery.supply.com"
+    "pattern": "(\\w*)peer1.distillery.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer1.distillery.supply.com"
+    "urlSubstitutionExp": "peer1.distillery.supply.com:7051"
+  - "mappedHost": "peer2.distillery.supply.com"
+    "pattern": "(\\w*)peer2.distillery.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer2.distillery.supply.com"
+    "urlSubstitutionExp": "peer2.distillery.supply.com:7051"
+  - "mappedHost": "peer1.shop.supply.com"
+    "pattern": "(\\w*)peer1.shop.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer1.shop.supply.com"
+    "urlSubstitutionExp": "peer1.shop.supply.com:7051"
+  - "mappedHost": "peer2.shop.supply.com"
+    "pattern": "(\\w*)peer2.shop.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer2.shop.supply.com"
+    "urlSubstitutionExp": "peer2.shop.supply.com:7051"
+  - "mappedHost": "peer1.supplier.supply.com"
+    "pattern": "(\\w*)peer1.supplier.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer1.supplier.supply.com"
+    "urlSubstitutionExp": "peer1.supplier.supply.com:7051"
+  - "mappedHost": "peer2.supplier.supply.com"
+    "pattern": "(\\w*)peer2.supplier.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "peer2.supplier.supply.com"
+    "urlSubstitutionExp": "peer2.supplier.supply.com:7051"
+  
+  "certificateAuthorities":
+  - "mappedHost": "ca1.distillery.supply.com"
+    "pattern": "(\\w*)ca1.distillery.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "ca1.distillery.supply.com"
+    "urlSubstitutionExp": "ca1.distillery.supply.com:7054"
+  - "mappedHost": "ca1.shop.supply.com"
+    "pattern": "(\\w*)ca1.shop.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "ca1.shop.supply.com"
+    "urlSubstitutionExp": "ca1.shop.supply.com:7054"
+  - "mappedHost": "ca1.supplier.supply.com"
+    "pattern": "(\\w*)ca1.supplier.supply.com(\\w*)"
+    "sslTargetOverrideUrlSubstitutionExp": "ca1.supplier.supply.com"
+    "urlSubstitutionExp": "ca1.supplier.supply.com:7054"

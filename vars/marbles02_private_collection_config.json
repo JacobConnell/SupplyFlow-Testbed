@@ -1,0 +1,19 @@
+[
+ {
+    "name": "collectionMarbles",
+    "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+    "requiredPeerCount": 0,
+    "maxPeerCount": 3,
+    "blockToLive":1000000,
+    "memberOnlyRead": true
+ },
+ {
+    "name": "collectionMarblePrivateDetails",
+    "policy": "OR( 'distillery-supply-com.member', 'supplier-supply-com.member' )",
+    "requiredPeerCount": 0,
+    "maxPeerCount": 3,
+    "blockToLive":30,
+    "memberOnlyRead": true
+ }
+]
+

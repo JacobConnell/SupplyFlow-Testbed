@@ -1,0 +1,18 @@
+{
+  "supply-com": {
+    "endpoint": [
+      {
+        "host": "orderer1.supply.com",
+        "port": 7050
+      },
+      {
+        "host": "orderer2.supply.com",
+        "port": 7050
+      },
+      {
+        "host": "orderer3.supply.com",
+        "port": 7050
+      }
+    ]
+  }
+}

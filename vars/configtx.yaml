@@ -1,0 +1,209 @@
+---
+Organizations:
+  - &distillery-supply-com
+      Name: distillery-supply-com
+      ID: distillery-supply-com
+      MSPDir: keyfiles/peerOrganizations/distillery.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin', 'distillery-supply-com.peer', 'distillery-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin', 'distillery-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.distillery.supply.com
+        Port: 7051
+      - Host: peer2.distillery.supply.com
+        Port: 7051
+  - &shop-supply-com
+      Name: shop-supply-com
+      ID: shop-supply-com
+      MSPDir: keyfiles/peerOrganizations/shop.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('shop-supply-com.admin', 'shop-supply-com.peer', 'shop-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('shop-supply-com.admin', 'shop-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('shop-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('shop-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.shop.supply.com
+        Port: 7051
+      - Host: peer2.shop.supply.com
+        Port: 7051
+  - &supplier-supply-com
+      Name: supplier-supply-com
+      ID: supplier-supply-com
+      MSPDir: keyfiles/peerOrganizations/supplier.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('supplier-supply-com.admin', 'supplier-supply-com.peer', 'supplier-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('supplier-supply-com.admin', 'supplier-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('supplier-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('supplier-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.supplier.supply.com
+        Port: 7051
+      - Host: peer2.supplier.supply.com
+        Port: 7051
+  - &supply-com
+      Name: supply-com
+      ID: supply-com
+      MSPDir: keyfiles/ordererOrganizations/supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('supply-com.member')"
+        Writers:
+          Type: Signature
+          Rule: "OR('supply-com.member')"
+        Admins:
+          Type: Signature
+          Rule: "OR('supply-com.admin')"
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+
+  Orderer: &OrdererCapabilities
+    V2_0: true
+
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+
+  BatchTimeout: 2s
+
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+
+  Addresses:
+  - orderer1.supply.com:7050
+  - orderer2.supply.com:7050
+  - orderer3.supply.com:7050
+  EtcdRaft:
+    Consenters:
+    - Host: orderer1.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer1.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer1.supply.com/tls/server.crt
+    - Host: orderer2.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer2.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer2.supply.com/tls/server.crt
+    - Host: orderer3.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer3.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer3.supply.com/tls/server.crt
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  OrgChannel:
+    Consortium: SampleConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+      - *distillery-supply-com
+      - *shop-supply-com
+      - *supplier-supply-com
+      Capabilities:
+        <<: *ApplicationCapabilities
+
+  OrdererGenesis:
+    <<: *ChannelDefaults
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+      - *supply-com
+      Capabilities:
+        <<: *OrdererCapabilities
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+      - <<: *supply-com
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+        - *distillery-supply-com
+        - *shop-supply-com
+        - *supplier-supply-com

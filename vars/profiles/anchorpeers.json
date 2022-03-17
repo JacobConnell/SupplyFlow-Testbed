@@ -1,0 +1,38 @@
+{
+  "distillery-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.distillery.supply.com", "port": "7051" },
+           { "host": "peer2.distillery.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "shop-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.shop.supply.com", "port": "7051" },
+           { "host": "peer2.shop.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "supplier-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.supplier.supply.com", "port": "7051" },
+           { "host": "peer2.supplier.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  }
+}
