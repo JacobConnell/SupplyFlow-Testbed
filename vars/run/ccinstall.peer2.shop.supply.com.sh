@@ -9,14 +9,14 @@ export CORE_PEER_MSPCONFIGPATH=/vars/keyfiles/peerOrganizations/shop.supply.com/
 cd /go/src/github.com/chaincode/supplyflow
 
 
-if [ ! -f "supplyflow_go_4.8.tar.gz" ]; then
+if [ ! -f "supplyflow_go_5.74.tar.gz" ]; then
   cd go
   GO111MODULE=on
   go mod vendor
   cd -
-  peer lifecycle chaincode package supplyflow_go_4.8.tar.gz \
+  peer lifecycle chaincode package supplyflow_go_5.74.tar.gz \
     -p /go/src/github.com/chaincode/supplyflow/go/ \
-    --lang golang --label supplyflow_4.8
+    --lang golang --label supplyflow_5.74
 fi
 
-peer lifecycle chaincode install supplyflow_go_4.8.tar.gz
+peer lifecycle chaincode install supplyflow_go_5.74.tar.gz

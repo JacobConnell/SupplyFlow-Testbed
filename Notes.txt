@@ -43,20 +43,83 @@ Order=$( echo '{"BarleyOrderID":"222", "Status":"Will Do", "Price":2, "InvoiceID
 ./minifab query -p '"ReadBarleyOrder","222"' -t ''
 
 
+Order=$( echo '{"MaltOrderID":"12", "Size":"50Kilo"}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"InitMaltOrder"' -t '{"InputJSON":"'$Order'"}'
+
+./minifab query -p '"ReadMaltOrder","12"' -t ''
+
+Order=$( echo '{"MaltOrderID":"12", "BarleyOrderID":"222", "Price":35, "InvoiceID":1234}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"ConfirmMaltOrder"' -t '{"InputJSON":"'$Order'"}'
+
+./minifab query -p '"ReadMaltOrder","12"' -t ''
+
+./minifab query -p '"ReadPrivateMaltOrder","12"' -t ''
+
+./minifab invoke -p '"AcceptMaltOrder","12", "Accepted", "Pass"' -t ''
 
 
+./minifab query -p '"ReadMaltOrder","12"' -t ''
 
 
+Batch=$( echo '{"BatchID":"12", "MaltOrderID":"12", "Size":"5L"}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"InitBatch"' -t '{"InputJSON":"'$Batch'"}'
+
+./minifab query -p '"ReadBatch","12"' -t '' 
+
+./minifab invoke -p '"UpdateBatchStatus","12", "Hi"' -t ''
+
+./minifab invoke -p '"SetInitialProof","12", "70%"' -t ''
+
+./minifab invoke -p '"SendToWarehouse","12"' -t ''
 
 
+Maturation=$( echo '{"CaskID":"3323", "BatchID":"12", "Size":"5L"}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"InitMaturation"' -t '{"InputJSON":"'$Maturation'"}'
+
+./minifab invoke -p '"SetFinalProof","3323", "41%"' -t ''
+
+./minifab query -p '"ReadCask","3323"' -t '' 
+
+./minifab invoke -p '"QualityControl","3324", "Pass", "Hints", "Oaky"' -t ''
+
+./minifab query -p '"ReadCask","3323"' -t '' 
+
+./minifab invoke -p '"SendToBottling","3323"' -t ''
+
+./minifab invoke -p '"AcceptAtBottling","3323"' -t ''
 
 
+Bottle=$( echo '{"BottleID":"5475", "CaskID":"3323", "Size":"500ml"}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"InitBottling"' -t '{"InputJSON":"'$Bottle'"}'
+
+./minifab query -p '"ReadBottle","5475"' -t '' 
+
+./minifab invoke -p '"SetPallet","5475", "15"' -t ''
+
+./minifab query -p '"BottleLife","5475"' -t '' 
+
+Retailer=$( echo '{"RetailerOrderID":"4321", "Shop":"Edinburgh", "Size":"50 crates"}' | base64 | tr -d \\n )
+./minifab invoke -p '"InitPalletOrder"' -t '{"InputJSON":"'$Retailer'"}'
+
+./minifab query -p '"ReadRetailerOrder","4321"' -t '' 
+
+Pallet=$( echo '{"RetailerOrderID":"4321", "PalletID":"5475", "Price":35, "InvoiceID":1234}' | base64 | tr -d \\n )
+
+./minifab invoke -p '"ConfirmRetailerOrder"' -t '{"InputJSON":"'$Pallet'"}'
+
+./minifab invoke -p '"ShipRetailerOrder","4321", "15"' -t ''
 
 
+./minifab invoke -p '"DeliveredRetailerOrder","4321", "15"' -t ''
 
+./minifab query -p '"ReadRetailerOrder","4321"' -t '' 
 
-
-
+./minifab query -p '"ReadPrivateRetailerOrder","4321"' -t '' 
 
 
 
@@ -88,25 +151,4 @@ Order=$( echo '{"BarleyOrderID”:”12345”,”Size":"51Kilo", "Producer”:�
 
 
 
-# To init marble
-    Order=$( echo '{"BarleyOrderID":"444553343","Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
-    ./minifab invoke -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
 
-    MARBLE=$( echo '{"name":"marble2","color":"red","size":50,"owner":"tom","price":102}' | base64 | tr -d \\n )
-    minifab invoke -p '"initMarble"' -t '{"marble":"'$MARBLE'"}'
-
-    MARBLE=$( echo '{"name":"marble3","color":"blue","size":70,"owner":"tom","price":103}' | base64 | tr -d \\n )
-    minifab invoke -p '"initMarble"' -t '{"marble":"'$MARBLE'"}'
-
-# To transfer marble
-    MARBLE_OWNER=$( echo '{"name":"marble2","owner":"jerry"}' | base64 | tr -d \\n )
-    minifab invoke -p '"transferMarble"' -t '{"marble_owner":"'$MARBLE_OWNER'"}'
-
-# To query marble
-    minifab query -p '"readMarble","marble1"' -t ''
-    minifab query -p '"readMarblePrivateDetails","marble1"' -t ''
-    minifab query -p '"getMarblesByRange","marble1","marble4"' -t ''
-
-# To delete marble
-    MARBLE_ID=$( echo '{"name":"marble1"}' | base64 | tr -d \\n )
-    minifab invoke -p '"delete"' -t '{"marble_delete":"'$MARBLE_ID'"}'

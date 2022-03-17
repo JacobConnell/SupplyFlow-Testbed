@@ -16,4 +16,4 @@ peer chaincode invoke -o $ORDERER_ADDRESS --cafile $ORDERER_TLS_CA \
   --tlsRootCertFiles /vars/keyfiles/peerOrganizations/shop.supply.com/peers/peer1.shop.supply.com/tls/ca.crt \
   --peerAddresses peer2.supplier.supply.com:7051 \
   --tlsRootCertFiles /vars/keyfiles/peerOrganizations/supplier.supply.com/peers/peer2.supplier.supply.com/tls/ca.crt \
-  -c '{"Args":["AcceptBarleyOrder","222", "Accepted"]}'
+  -c '{"Args":["DeliveredRetailerOrder","4321", "15"]}'

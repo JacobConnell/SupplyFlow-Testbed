@@ -12,4 +12,4 @@ peer chaincode query -o $ORDERER_ADDRESS --cafile $ORDERER_TLS_CA \
   --tls -C supplychain -n supplyflow  \
   --peerAddresses peer1.supplier.supply.com:7051 \
   --tlsRootCertFiles /vars/keyfiles/peerOrganizations/supplier.supply.com/peers/peer1.supplier.supply.com/tls/ca.crt \
-  -c '{"Args":["ReadBarleyOrder","222"]}'
+  -c '{"Args":["ReadPrivateRetailerOrder","4321"]}'
