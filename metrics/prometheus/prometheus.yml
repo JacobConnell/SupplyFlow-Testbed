@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 1s
+  external_labels:
+    monitor: 'devopsage-monitor'
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "Orderer"
+    static_configs:
+      - targets: ["orderer1.supply.com:7060", "orderer2.supply.com:7060", "orderer3.supply.com:7060"]
+  - job_name: "Shop"
+    static_configs:
+      - targets: ["peer1.shop.supply.com:7061", "peer2.shop.supply.com:7061"]
+  - job_name: "Distillery"
+    static_configs:
+      - targets: ["peer1.distillery.supply.com:7061", "peer2.distillery.supply.com:7061"]
+  - job_name: "Supplier"
+    static_configs:
+      - targets: ["peer1.supplier.supply.com:7061", "peer2.supplier.supply.com:7061"]
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+  - job_name: node
+    static_configs:
+      - targets: ['node-exporter:9100']

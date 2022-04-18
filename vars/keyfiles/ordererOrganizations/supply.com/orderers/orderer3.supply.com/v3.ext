@@ -1,4 +1,4 @@
 keyUsage = critical,digitalSignature
 basicConstraints = critical,CA:FALSE
-subjectAltName=IP: 192.168.1.9,DNS:orderer3.supply.com,DNS:orderer3-supply-com,DNS:localhost,IP:127.0.0.1
+subjectAltName=IP: 10.1.10.24,DNS:orderer3.supply.com,DNS:orderer3-supply-com,DNS:localhost,IP:127.0.0.1
 authorityKeyIdentifier = keyid,issuer

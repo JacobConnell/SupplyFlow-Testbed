@@ -139,7 +139,7 @@ func (t *cryptoChaincode) Decrypt(key []byte, ciphertext []byte) []byte {
 	// if the text is too small, then it is incorrect
 	if len(ciphertext) < aes.BlockSize {
 		panic("Text is too short")
-	}
+	}f
 
 	// Get the 16 byte IV
 	iv := ciphertext[:aes.BlockSize]

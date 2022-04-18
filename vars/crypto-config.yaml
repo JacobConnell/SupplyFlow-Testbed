@@ -5,13 +5,13 @@ OrdererOrgs:
     Specs:
       - Hostname: orderer1
         SANS:
-          - orderer1.supply.com
+          - 10.1.10.24
       - Hostname: orderer2
         SANS:
-          - orderer2.supply.com
+          - 10.1.10.24
       - Hostname: orderer3
         SANS:
-          - orderer3.supply.com
+          - 10.1.10.24
 
 PeerOrgs:
   - Name: distillery.supply.com
@@ -27,11 +27,11 @@ PeerOrgs:
       - Hostname: peer1
         CommonName: peer1.distillery.supply.com
         SANS:
-          - peer1.distillery.supply.com
+          - 10.1.10.24
       - Hostname: peer2
         CommonName: peer2.distillery.supply.com
         SANS:
-          - peer2.distillery.supply.com
+          - 10.1.10.24
   - Name: shop.supply.com
     Domain: shop.supply.com
     EnableNodeOUs: true
@@ -45,11 +45,11 @@ PeerOrgs:
       - Hostname: peer1
         CommonName: peer1.shop.supply.com
         SANS:
-          - peer1.shop.supply.com
+          - 10.1.10.24
       - Hostname: peer2
         CommonName: peer2.shop.supply.com
         SANS:
-          - peer2.shop.supply.com
+          - 10.1.10.24
   - Name: supplier.supply.com
     Domain: supplier.supply.com
     EnableNodeOUs: true
@@ -63,8 +63,8 @@ PeerOrgs:
       - Hostname: peer1
         CommonName: peer1.supplier.supply.com
         SANS:
-          - peer1.supplier.supply.com
+          - 10.1.10.24
       - Hostname: peer2
         CommonName: peer2.supplier.supply.com
         SANS:
-          - peer2.supplier.supply.com
+          - 10.1.10.24
