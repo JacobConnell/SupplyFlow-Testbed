@@ -70,7 +70,7 @@ if [ ! -z ${CC_POLICY+x} ]; then CC_POLICY=$(echo "${CC_POLICY}"|base64 | tr -d 
 if [ ! -z ${TRANSIENT_DATA+x} ]; then TRANSIENT_DATA=$(echo "${TRANSIENT_DATA}"|base64 | tr -d \\n); fi
 doDefaults
 
-echo "Minifab Execution Context:"
+echo "SupplyFlow Execution Context:"
 echo "    FABRIC_RELEASE=$IMAGETAG"
 echo "    CHANNEL_NAME=$CHANNEL_NAME"
 echo "    PEER_DATABASE_TYPE=$DB_TYPE"

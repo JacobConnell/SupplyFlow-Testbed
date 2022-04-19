@@ -1,0 +1,189 @@
+producer1-supply-com
+producer2-supply-com
+malting-supply-com
+distillery-supply-com 
+maturation-supply-com
+bottling-supply-com
+retailer1-supply-com
+retailer2-supply-com
+
+./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -e true
+
+./supplyflow netup -o distillery.supply.com -s couchdb -n supplyflow -e true
+
+docker run \
+    -p 9090:9090 \
+    -v ./prometheus.yml:/etc/prometheus/prometheus.yml \
+    prom/prometheus
+
+
+docker run \
+    -p 9090:9090 \
+    -v $(pwd)/prometheus:/etc/prometheus \
+    prom/prometheus
+
+
+./supplyflow install -n supplyflow -r true
+
+./supplyflow approve,commit,initialize -p ''
+
+
+Order=$( echo '{"BarleyOrderID":"222","Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+
+Order=$( echo '{"BarleyOrderID":"111","Size":"49Kilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
+
+./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+
+
+Order=$( echo '{"BarleyOrderID":"222", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland"}' | base64 | tr -d \\n )
+
+Order=$( echo '{"BarleyOrderID":"111", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland"}' | base64 | tr -d \\n )
+
+
+./supplyflow invoke -p '"ConfirmBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
+
+
+./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+
+
+./supplyflow query -p '"ReadPrivateBarleyOrder","222"' -t ''
+
+
+./supplyflow invoke -p '"ShipBarleyOrder","222"' -t ''
+./supplyflow invoke -p '"ShipBarleyOrder","111"' -t ''
+
+
+./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+
+
+./supplyflow invoke -p '"AcceptBarleyOrder","222", "Accepted"' -t ''
+./supplyflow invoke -p '"AcceptBarleyOrder","111", "Accepted"' -t ''
+
+./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+
+
+Order1=$( echo '{"MaltOrderID":"12", "Size":"50Kilo"}' | base64 | tr -d \\n )
+Order2=$( echo '{"MaltOrderID":"15", "Size":"50Kilo"}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"InitMaltOrder"' -t '{"InputJSON":"'$Order1'"}'
+./supplyflow invoke -p '"InitMaltOrder"' -t '{"InputJSON":"'$Order2'"}'
+
+./supplyflow query -p '"ReadMaltOrder","12"' -t ''
+
+Order1=$( echo '{"MaltOrderID":"12", "BarleyOrderID":"222", "Price":35, "InvoiceID":1234}' | base64 | tr -d \\n )
+Order2=$( echo '{"MaltOrderID":"15", "BarleyOrderID":"222", "Price":35, "InvoiceID":1234}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"ConfirmMaltOrder"' -t '{"InputJSON":"'$Order1'"}'
+./supplyflow invoke -p '"ConfirmMaltOrder"' -t '{"InputJSON":"'$Order2'"}'
+
+./supplyflow query -p '"ReadMaltOrder","12"' -t ''
+
+./supplyflow query -p '"ReadPrivateMaltOrder","12"' -t ''
+
+./supplyflow invoke -p '"AcceptMaltOrder","12", "Accepted", "Pass"' -t ''
+./supplyflow invoke -p '"AcceptMaltOrder","15", "Accepted", "Pass"' -t ''
+
+./supplyflow query -p '"ReadMaltOrder","12"' -t ''
+
+Batch1=$( echo '{"BatchID":"120", "MaltOrderID":"12", "Size":"5L"}' | base64 | tr -d \\n )
+Batch2=$( echo '{"BatchID":"150", "MaltOrderID":"12", "Size":"5L"}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"InitBatch"' -t '{"InputJSON":"'$Batch1'"}'
+./supplyflow invoke -p '"InitBatch"' -t '{"InputJSON":"'$Batch2'"}'
+
+./supplyflow query -p '"ReadBatch","12"' -t '' 
+
+./supplyflow invoke -p '"UpdateBatchStatus","120", "Hi"' -t ''
+./supplyflow invoke -p '"UpdateBatchStatus","150", "Getting There"' -t ''
+
+./supplyflow invoke -p '"SetInitialProof","120", "70%"' -t ''
+./supplyflow invoke -p '"SetInitialProof","150", "70%"' -t ''
+
+./supplyflow invoke -p '"SendToWarehouse","120", "PASS"' -t ''
+./supplyflow invoke -p '"SendToWarehouse","150", "PASS"' -t ''
+
+Maturation1=$( echo '{"CaskID":"3324", "BatchID":"150", "Size":"5L"}' | base64 | tr -d \\n )
+Maturation2=$( echo '{"CaskID":"3326", "BatchID":"120", "Size":"5L"}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"InitMaturation"' -t '{"InputJSON":"'$Maturation1'"}'
+./supplyflow invoke -p '"InitMaturation"' -t '{"InputJSON":"'$Maturation2'"}'
+
+./supplyflow invoke -p '"SetFinalProof","3323", "41%"' -t ''
+./supplyflow invoke -p '"SetFinalProof","3325", "39.5%"' -t ''
+
+./supplyflow query -p '"ReadCask","3323"' -t '' 
+
+./supplyflow query -p '"ReadCaskPrivate","3324"' -t '' 
+
+./supplyflow invoke -p '"QualityControl","3324", "Pass", "Hints", "Oaky"' -t ''
+./supplyflow invoke -p '"QualityControl","3326", "Pass", "Hints", "Oaky"' -t ''
+
+
+./supplyflow invoke -p '"SendToBottling","3324"' -t ''
+./supplyflow invoke -p '"SendToBottling","3326"' -t ''
+
+./supplyflow invoke -p '"AcceptAtBottling","3324"' -t ''
+./supplyflow invoke -p '"AcceptAtBottling","3326"' -t ''
+
+
+Bottle=$( echo '{"BottleID":"54758", "CaskID":["3324", "3326"], "Size":"500ml"}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"InitBottling"' -t '{"InputJSON":"'$Bottle'"}'
+
+./supplyflow query -p '"ReadBottle","54758"' -t '' 
+
+./supplyflow invoke -p '"SetPallet","5475", "15"' -t ''
+
+./supplyflow query -p '"BottleLife3","5475"' -t '' 
+
+Retailer=$( echo '{"RetailerOrderID":"4321", "Shop":"Edinburgh", "Size":"50 crates"}' | base64 | tr -d \\n )
+./supplyflow invoke -p '"InitPalletOrder"' -t '{"InputJSON":"'$Retailer'"}'
+
+./supplyflow query -p '"ReadRetailerOrder","4321"' -t '' 
+
+Pallet=$( echo '{"RetailerOrderID":"4321", "PalletID":"5475", "Price":35, "InvoiceID":1234}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"ConfirmRetailerOrder"' -t '{"InputJSON":"'$Pallet'"}'
+
+./supplyflow invoke -p '"ShipRetailerOrder","4321", "15"' -t ''
+
+
+./supplyflow invoke -p '"DeliveredRetailerOrder","4321", "15"' -t ''
+
+./supplyflow query -p '"ReadRetailerOrder","4321"' -t '' 
+
+./supplyflow query -p '"ReadPrivateRetailerOrder","4321"' -t '' 
+
+
+
+Order=$( echo '{"BarleyOrderID":"222", "Status":"Will Do", "Price":2, "InvoiceID":1234}' | base64 | tr -d \\n )
+
+./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+
+Order=$( echo '{"BarleyOrderID":"222","Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+
+
+
+Order
+
+Order=$( echo '{"BarleyOrderID”:”222”,”Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+
+
+Order=$( echo '{"BarleyOrderID”:”33445”,”Size":"51Kilo", "Producer":"NA”, "Status":"NA”}’ | base64 | tr -d \\n )
+
+
+//START ORDER
+
+Order=$( echo '{"BarleyOrderID”:”12345”,”Size":"51Kilo", "Producer”:”Producer1”}' | base64 | tr -d \\n )
+    
+
+
+
+
+./supplyflow query -p '”ReadBarleyOrder”,”222”’ -t ''
+
+
+
+

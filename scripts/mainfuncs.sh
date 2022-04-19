@@ -29,7 +29,7 @@ OPNAMES=([up]="$LINE0$LINE1" [netup]='imageget,certgen,netup,netstats' \
 # Print the usage message
 function printHelp() {
   echo "Usage: "
-  echo "  minifab <mode> [options]"
+  echo "  SupplyFlow <mode> [options]"
   echo "    <mode> - one of operations or combination of operations separated by comma"
   echo ""
   echo "      - 'up' - bring up the network and do all default channel and chaincode operations"

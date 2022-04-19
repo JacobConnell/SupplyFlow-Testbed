@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	ccID      = "samplecc"
+	ccID      = "simple"
 	channelID = "mychannel"
-	orgName   = "org1.example.com"
+	orgName   = "distillery.supply.com"
 	orgAdmin  = "Admin"
 )
 
@@ -38,7 +38,7 @@ func doEnroll() {
 	// Try to get some configuration data from the connection profile
 	sdkcfg, _ := sdk.Config()
 	idcfg, _ := rmsp.ConfigFromBackend(sdkcfg)
-	caconfig, ok := idcfg.CAConfig("ca1.org1.example.com")
+	caconfig, ok := idcfg.CAConfig("ca1.distillery.supply.com")
 	if !ok {
 		fmt.Println("Could not get the caconfiguration.")
 		return

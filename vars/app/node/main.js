@@ -15,7 +15,7 @@ async function main() {
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
         // Create a new file system based wallet for managing identities.
-        const walletPath = path.join('/vars/profiles/vscode/wallets', 'org0.example.com');
+        const walletPath = path.join('/vars/profiles/vscode/wallets', 'distillery.supply.com');
         const wallet = await Wallets.newFileSystemWallet(walletPath);
         console.log(`Wallet path: ${walletPath}`);
 
@@ -33,13 +33,12 @@ async function main() {
         const network = await gateway.getNetwork('mychannel');
 
         // Get the contract from the network.
-        const contract = network.getContract('samplecc');
+        const contract = network.getContract('simple');
 
         // Submit the specified transaction.
         const randomId = Math.floor(Math.random()*500000);
-        await contract.submitTransaction('invoke', 'put', `abc_${randomId}`, `def_${randomId}`);
+        await contract.submitTransaction('invoke', 'initMarble', `abc_${randomId}`, `def_${randomId}`);
         console.log('Transaction has been submitted');
-
         // Disconnect from the gateway.
         await gateway.disconnect();
 
