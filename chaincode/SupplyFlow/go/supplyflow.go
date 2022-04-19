@@ -127,8 +127,6 @@ type BottleLifeModel struct {
     Casks []CaskLifeModel `json:"Casks"`
 }
 
-
-
 //Malting Starts New Barley Order
 func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: CHECK MSP IS OF MALTING AND NO ONE ELSE
@@ -200,15 +198,13 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
 	//TODO: Limit to check the producer field of the Supplier.
-	if msp == "supplier-supply-com" {
+	if (msp == "producer1-supply-com" || msp == "producer2-supply-com") {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
 		}
 
-		// BarleyOrder properties are private, therefore they get passed in transient field
 		transientJSON, ok := transMap["InputJSON"]
 		if !ok {
 			return fmt.Errorf("Order not found in the transient map")
@@ -299,9 +295,8 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
 	//TODO: Limit to check the producer field of the Supplier.
-	if msp == "supplier-supply-com" {
+	if (msp == "producer1-supply-com" || msp == "producer2-supply-com") {
 		
 		if len(BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -342,8 +337,7 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR MILLER MSP
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		
 		if len(BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -398,9 +392,29 @@ func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterf
 
 func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyPrivateOrder, error) {
 
-	//TODO:  FILTER THIS FOR THE CORRECT SUPPLIER. IF ITS DISTILLERY, CHECK BOTH COLLECTIONS AND ONLY RETURN THE TRUE ONE
 	OrderID := ("BARLEY"+BarleyOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+
+	if (msp == "malting-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+		if orderJSON == nil {
+			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+		}
+	}
+
+	if (msp == "producer1-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+	}
+	if (msp == "producer2-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+	}
+
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -479,8 +493,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY MSP FOR MALTING MILL
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
@@ -581,9 +594,7 @@ func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY MALTING MILL
-
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		
 		if len(MaltOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -624,8 +635,7 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR MILLER MSP
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(MaltOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -775,7 +785,7 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 	fmt.Println("Failed: ", msp)
 	//TODO: SETUP TO LIMIT ONLY Distillery
 
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -869,9 +879,8 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Distillery
 
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -920,9 +929,9 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY WAREHOUSE
 
-	if msp == "supplier-supply-com" {
+
+	if msp == "maturation-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -976,8 +985,6 @@ func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, B
 
 	return order, nil
 }
-
-//Maturation Start Maturation 
 
 func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Maturation
@@ -1058,9 +1065,8 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Maturation
 
-	if msp == "supplier-supply-com" {
+	if msp == "maturation-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1108,9 +1114,8 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Manturation
 
-	if msp == "supplier-supply-com" {
+	if msp == "maturation-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1364,7 +1369,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 	fmt.Println("Failed: ", msp)
 	//TODO: SETUP TO LIMIT ONLY Botteling
 
-	if msp == "supplier-supply-com" {
+	if msp == "bottling-supply-com" {
 		
 		if len(BottleID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1584,8 +1589,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY FOR DISTILLERY
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
@@ -1680,9 +1684,7 @@ func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY DISTILLERY
-
-	if msp == "supplier-supply-com" {
+	if msp == "bottling-supply-com" {
 		
 		if len(RetailerOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1723,8 +1725,7 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR RETAILERS MSP
-	if msp == "supplier-supply-com" {
+	if (msp == "retailer1-supply-com" || msp == "retailer2-supply-com") {
 		
 		if len(RetailerOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1778,10 +1779,29 @@ func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInte
 }
 
 func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerPrivateOrder, error) {
-
-	//TODO: Filter Based On Feedback From Correct Group
 	OrderID := ("PALLET"+RetailerOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+
+
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+
+	if (msp == "distillery-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+		if orderJSON == nil {
+			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
+		}
+	}
+
+	if (msp == "retailer1-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+	}
+	if (msp == "retailer2-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -1794,7 +1814,6 @@ func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionCont
 
 	return Privorder, nil
 }
-
 
 func main() {
 

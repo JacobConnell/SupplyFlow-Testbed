@@ -10,15 +10,33 @@ scrape_configs:
   - job_name: "Orderer"
     static_configs:
       - targets: ["orderer1.supply.com:7060", "orderer2.supply.com:7060", "orderer3.supply.com:7060"]
-  - job_name: "Shop"
+  - job_name: "Retailer1"
     static_configs:
-      - targets: ["peer1.shop.supply.com:7061", "peer2.shop.supply.com:7061"]
+      - targets: ["peer1.retailer1.supply.com:7061"]
+  - job_name: "Retailer2"
+    static_configs:
+      - targets: ["peer1.retailer2.supply.com:7061"]
+  - job_name: "Producer1"
+    static_configs:
+      - targets: ["peer1.producer1.supply.com:7061"]
+  - job_name: "HMRC"
+    static_configs:
+      - targets: ["peer1.hmrc.supply.com:7061"]
+  - job_name: "Maturation"
+    static_configs:
+      - targets: ["peer1.maturation.supply.com:7061"]
+  - job_name: "Bottling"
+    static_configs:
+      - targets: ["peer1.bottling.supply.com:7061"]
+  - job_name: "Producer2"
+    static_configs:
+      - targets: ["peer1.producer2.supply.com:7061"]
   - job_name: "Distillery"
     static_configs:
       - targets: ["peer1.distillery.supply.com:7061", "peer2.distillery.supply.com:7061"]
-  - job_name: "Supplier"
+  - job_name: "MaltingMill"
     static_configs:
-      - targets: ["peer1.supplier.supply.com:7061", "peer2.supplier.supply.com:7061"]
+      - targets: ["peer1.malting.supply.com:7061", "peer2.malting.supply.com:7061"]
   - job_name: cadvisor
     scrape_interval: 5s
     static_configs:
