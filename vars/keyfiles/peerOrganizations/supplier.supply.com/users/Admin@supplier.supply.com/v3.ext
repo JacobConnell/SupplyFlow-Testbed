@@ -1,4 +1,0 @@
-keyUsage = critical,digitalSignature
-basicConstraints = critical,CA:FALSE
-subjectAltName=IP: 10.1.10.24,DNS:Admin@supplier.supply.com,DNS:Admin@supplier-supply-com,DNS:localhost,IP:127.0.0.1
-authorityKeyIdentifier = keyid,issuer
