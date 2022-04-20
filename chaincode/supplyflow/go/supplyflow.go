@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"time"
+	"strings"
 )
 
 //Barley Orders
@@ -18,6 +19,8 @@ type BarleyOrder struct {
 	Status       string    `json:"Status"`
 	Size      string `json:"Size"`
 	Accepted      string `json:"Accepted"`
+	GeoLocation      string `json:"GeoLocation"`
+	SoilPH      string `json:"SoilPH"`
 }
 
 type BarleyPrivateOrder struct {
@@ -75,8 +78,10 @@ type Maturation struct {
 type Bottling struct {
 	ObjectType string `json:"docType"` 
 	BottleID       string `json:"BottleID"`  
-	CaskID       string `json:"CaskID"`  
+	CaskID       []string `json:"CaskID"`  
 	Status       string    `json:"Status"`
+	Duty	string    `json:"Duty"` 
+	Age	string    `json:"Age"`
 	Size      string `json:"Size"`
 	PalletID      string `json:"PalletID"`
 }
@@ -101,26 +106,29 @@ type SmartContract struct {
 	contractapi.Contract
 }
 
-type BottleLife struct {
-	ObjectType string `json:"docType"` 
-	BottleID	string `json:"BottleID"`
-	Producer	string `json:"Producer"`
-	ProducerQCPass	string `json:"ProducerQCPass"`
-	MaltOrderID		string `json:"MaltOrderID"`
-	MaltQCPass	string `json:"MaltQCPass"`
-	BatchID		string `json:"BatchID"`
-	BatchQCPass	string `json:"BatchQCPass"`
-	BatchInitalProof	string `json:"BatchInitalProof"`
-	CaskID	string `json:"CaskID"`
-	CaskQCPass	string `json:"CaskQCPass"`
-	MaturationStart	string `json:"MaturationStart"`
-	MaturationEnd	string `json:"MaturationEnd"`
-	QCNotes	string `json:"QCNotes"`
-	QCTaste	string	`json:"QCTaste"`
-	PalletID	string `json:"PalletID"`
+type CaskLifeModel struct {
+    ObjectType string `json:"docType"` 
+    CaskID string `json:”CaskID”`
+    QCPass  string `json:"QCPass"`
+    BatchID  string `json:”BatchID”`
+	BatchQCPass  string `json:"BatchQCPass"`
+    MaltID  string `json:”MaltID”`
+	MaltQCPass  string `json:"MaltQCPass"`
+    BarleyOrderID  string `json:”BarleyOrderID”`
+	Producer    string `json:"Producer"`
+    SoilPH  string `json:"SoilPH"`
+    GeoLocation string `json:"GeoLocation"`
 }
-//Malting Starts New Barley Order
 
+type BottleLifeModel struct {
+    ObjectType string `json:"docType"` 
+    BottleID    string `json:"BottleID"`
+	Age		string `json:"Age"`
+	Duty	string `json:"Duty"`
+    Casks []CaskLifeModel `json:"Casks"`
+}
+
+//Malting Starts New Barley Order
 func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: CHECK MSP IS OF MALTING AND NO ONE ELSE
 	transMap, err := ctx.GetStub().GetTransient()
@@ -152,7 +160,7 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 
 	// ==== Check if order already exists ====
 	OrderID := ("BARLEY"+orderInput.BarleyOrderID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -175,7 +183,7 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -191,15 +199,12 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
-	//TODO: Limit to check the producer field of the Supplier.
-	if msp == "supplier-supply-com" {
+	if (msp == "producer1-supply-com" || msp == "producer2-supply-com") {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
 		}
 
-		// BarleyOrder properties are private, therefore they get passed in transient field
 		transientJSON, ok := transMap["InputJSON"]
 		if !ok {
 			return fmt.Errorf("Order not found in the transient map")
@@ -208,6 +213,8 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		type OrderTransientInput struct {
 			BarleyOrderID  string `json:"BarleyOrderID"`
 			Status	string	`json:"Status"`
+			GeoLocation      string `json:"GeoLocation"`
+			SoilPH      string `json:"SoilPH"`
 			Price int `json:"Price"`
 			InvoiceID int `json:"InvoiceID"`
 		}
@@ -229,7 +236,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("Failed to get order:" + err.Error())
 		} else if orderAsBytes == nil {
@@ -242,40 +249,48 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
 		
-		orderToUpdate.Status = (OrderInput.Status)
+		prod := strings.Split(msp, "-")
+		if prod[0] == orderToUpdate.Producer {
 
-		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
-		if err != nil {
-			return err
+		
+
+			orderToUpdate.Status = (OrderInput.Status)
+			orderToUpdate.GeoLocation =	OrderInput.GeoLocation
+			orderToUpdate.SoilPH	=	OrderInput.SoilPH
+
+			orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+			err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
+			if err != nil {
+				return err
+			}
+
+			privOrder := &BarleyPrivateOrder{
+				ObjectType: "BarleyPrivateOrder",
+				BarleyOrderID:       OrderInput.BarleyOrderID,
+				Price:       OrderInput.Price,
+				InvoiceID:	OrderInput.InvoiceID,
+			}
+
+			orderPrivJSONasBytes, err := json.Marshal(privOrder)
+			if err != nil {
+				return fmt.Errorf(err.Error())
+			}
+
+		
+			if msp == "producer1-supply-com" {
+				err = ctx.GetStub().PutPrivateData("collectionPrivateProducer1-Orders", OrderID, orderPrivJSONasBytes)
+			}
+			if msp == "producer2-supply-com" {
+				err = ctx.GetStub().PutPrivateData("collectionPrivateProducer2-Orders", OrderID, orderPrivJSONasBytes)
+			}
+			if err != nil {
+				return fmt.Errorf("failed to put Order: %s", err.Error())
+			}
+		} else {
+			return fmt.Errorf("Producer Does Not Match")
 		}
-
-		privOrder := &BarleyPrivateOrder{
-			ObjectType: "BarleyPrivateOrder",
-			BarleyOrderID:       OrderInput.BarleyOrderID,
-			Price:       OrderInput.Price,
-			InvoiceID:	OrderInput.InvoiceID,
-		}
-
-		orderPrivJSONasBytes, err := json.Marshal(privOrder)
-		if err != nil {
-			return fmt.Errorf(err.Error())
-		}
-
-		//TODO: SETUP IF STATEMENT FOR OTHER PRODUCER TO CONTROL ACCESS TO BOTH PRIVATE STATES
-		//If Prod 1
-		err = ctx.GetStub().PutPrivateData("collectionPrivateProducer1-Orders", OrderID, orderPrivJSONasBytes)
-		//If Prod 2
-
-		//err = ctx.GetStub().PutPrivateData("collectionPrivateProducer2-Orders", OrderID, orderPrivJSONasBytes)
-		if err != nil {
-			return fmt.Errorf("failed to put Order: %s", err.Error())
-		}
-
-		//ELSE ERROR
-
 	} else {
-		return fmt.Errorf("Wrong MSP - Access Deinied")
+		return fmt.Errorf("Wrong MSP - Access Deinied")}
 	}
 	return nil
 }
@@ -286,16 +301,14 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY SUPPLIER MSPS FOR BOTH SUPPLIER
-	//TODO: Limit to check the producer field of the Supplier.
-	if msp == "supplier-supply-com" {
+	if (msp == "producer1-supply-com" || msp == "producer2-supply-com") {
 		
 		if len(BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("BARLEY"+BarleyOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -309,14 +322,17 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
 		
-		orderToUpdate.Status = "Shipped"
+		prod := strings.Split(msp, "-")
+		if prod[0] == orderToUpdate.Producer {
+			orderToUpdate.Status = "Shipped"
 
-		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
-		if err != nil {
-			return err
-		}
-
+			orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+			err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("Producer Does Not Match"}
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
@@ -329,15 +345,14 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR MILLER MSP
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		
 		if len(BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 		
 		OrderID := ("BARLEY"+BarleyOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -355,7 +370,7 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 		orderToUpdate.Accepted = Accepted
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -369,7 +384,7 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyOrder, error) {
 
 	OrderID := ("BARLEY"+BarleyOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -385,9 +400,29 @@ func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterf
 
 func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyPrivateOrder, error) {
 
-	//TODO:  FILTER THIS FOR THE CORRECT SUPPLIER. IF ITS DISTILLERY, CHECK BOTH COLLECTIONS AND ONLY RETURN THE TRUE ONE
 	OrderID := ("BARLEY"+BarleyOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+
+	if (msp == "malting-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+		if orderJSON == nil {
+			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+		}
+	}
+
+	if (msp == "producer1-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+	}
+	if (msp == "producer2-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+	}
+
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -430,7 +465,7 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 
 	// ==== Check if order already exists ====
 	OrderID := ("MALT"+orderInput.MaltOrderID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -452,7 +487,7 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -466,8 +501,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY MSP FOR MALTING MILL
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
@@ -506,14 +540,14 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 		}
 
 		//Test Barley Batch Exists
-		BarleyAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", ("BARLEY"+OrderInput.BarleyOrderID))
+		BarleyAsBytes, err := ctx.GetStub().GetState(("BARLEY"+OrderInput.BarleyOrderID))
 		if err != nil {
 			return fmt.Errorf("Failed to Check Barley Order:" + err.Error())
 		} else if BarleyAsBytes == nil {
 			return fmt.Errorf("BarleyOrder does not exist: " + OrderInput.BarleyOrderID)
 		}
 
-		orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("Failed to get order:" + err.Error())
 		} else if orderAsBytes == nil {
@@ -530,7 +564,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 		orderToUpdate.BarleyOrderID = OrderInput.BarleyOrderID
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -568,16 +602,14 @@ func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY MALTING MILL
-
-	if msp == "supplier-supply-com" {
+	if msp == "malting-supply-com" {
 		
 		if len(MaltOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("MALT"+MaltOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -594,7 +626,7 @@ func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterfac
 		orderToUpdate.Status = "Shipped"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -611,15 +643,14 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR MILLER MSP
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(MaltOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 		
 		OrderID := ("MALT"+MaltOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -638,7 +669,7 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 		orderToUpdate.QCPass = QC
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -652,7 +683,7 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 func (s *SmartContract) ReadMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaltOrder, error) {
 
 	OrderID := ("MALT"+MaltOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -714,7 +745,7 @@ func (s *SmartContract) InitBatch(ctx contractapi.TransactionContextInterface) e
 	}
 
 	//Test Malt Batch Exists
-	MaltAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", ("MALT"+orderInput.MaltOrderID))
+	MaltAsBytes, err := ctx.GetStub().GetState(("MALT"+orderInput.MaltOrderID))
 	if err != nil {
 		return fmt.Errorf("Failed to Check Malt Order:" + err.Error())
 	} else if MaltAsBytes == nil {
@@ -723,7 +754,7 @@ func (s *SmartContract) InitBatch(ctx contractapi.TransactionContextInterface) e
 
 	// ==== Check if order already exists ====
 	OrderID := ("BATCH"+orderInput.BatchID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -746,7 +777,7 @@ func (s *SmartContract) InitBatch(ctx contractapi.TransactionContextInterface) e
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -762,7 +793,7 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 	fmt.Println("Failed: ", msp)
 	//TODO: SETUP TO LIMIT ONLY Distillery
 
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -772,7 +803,7 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 		}
 
 		OrderID := ("BATCH"+BatchID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -789,7 +820,7 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 		orderToUpdate.Status = Status
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -807,9 +838,8 @@ func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Distillery
 
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -819,7 +849,7 @@ func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterf
 		}
 
 		OrderID := ("BATCH"+BatchID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -840,7 +870,7 @@ func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterf
 		orderToUpdate.Status = "Batch Proofed"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -857,9 +887,8 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Distillery
 
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -870,7 +899,7 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 		}
 
 		OrderID := ("BATCH"+BatchID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -891,7 +920,7 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 		orderToUpdate.QCPass = QC
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -908,16 +937,16 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY WAREHOUSE
 
-	if msp == "supplier-supply-com" {
+
+	if msp == "maturation-supply-com" {
 		
 		if len(BatchID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("BATCH"+BatchID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -937,7 +966,7 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 		orderToUpdate.Status = "Accepted at Warehouse"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -951,7 +980,7 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, BatchID string) (*Distillation, error) {
 
 	OrderID := ("BATCH"+BatchID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -964,8 +993,6 @@ func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, B
 
 	return order, nil
 }
-
-//Maturation Start Maturation 
 
 func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Maturation
@@ -997,7 +1024,7 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 	}
 
 	//Test Batch Exists
-	MaltAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", ("BATCH"+orderInput.BatchID))
+	MaltAsBytes, err := ctx.GetStub().GetState(("BATCH"+orderInput.BatchID))
 	if err != nil {
 		return fmt.Errorf("Failed to Check Malt Order:" + err.Error())
 	} else if MaltAsBytes == nil {
@@ -1006,7 +1033,7 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 
 	// ==== Check if order already exists ====
 	OrderID := ("CASK"+orderInput.CaskID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -1032,7 +1059,7 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -1046,9 +1073,8 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Maturation
 
-	if msp == "supplier-supply-com" {
+	if msp == "maturation-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1058,7 +1084,7 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 		}
 
 		OrderID := ("CASK"+CaskID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1079,7 +1105,7 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 		orderToUpdate.Status = "Batch Proofed"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1096,9 +1122,8 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Manturation
 
-	if msp == "supplier-supply-com" {
+	if msp == "maturation-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1114,7 +1139,7 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 		}
 
 		OrderID := ("CASK"+CaskID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1137,7 +1162,7 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 		orderToUpdate.Taste = Taste
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1154,16 +1179,15 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Maturation
 
-	if msp == "supplier-supply-com" {
+	if msp == "maturation-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("CASK"+CaskID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1195,7 +1219,7 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 		orderToUpdate.Age = fmt.Sprint("%.2f", (hours.Hours()/24/365))+" Years"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1212,16 +1236,15 @@ func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInter
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Bottling Plant
 
-	if msp == "supplier-supply-com" {
+	if msp == "bottling-supply-com" {
 		
 		if len(CaskID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("CASK"+CaskID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1241,7 +1264,7 @@ func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInter
 		orderToUpdate.Status = "Accepted at Bottling"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1255,7 +1278,7 @@ func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInter
 func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, CaskID string) (*Maturation, error) {
 
 	OrderID := ("CASK"+CaskID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -1273,6 +1296,7 @@ func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, Ca
 
 func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Bottling
+	//TODO: Private Cask Data
 	transMap, err := ctx.GetStub().GetTransient()
 	if err != nil {
 		return fmt.Errorf("Error getting transient: " + err.Error())
@@ -1301,16 +1325,18 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 	}
 
 	//Test Batch Exists
-	CaskAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", ("CASK"+orderInput.CaskID))
-	if err != nil {
-		return fmt.Errorf("Failed to Check Malt Order:" + err.Error())
-	} else if CaskAsBytes == nil {
-		return fmt.Errorf("Cask does not exist: " + orderInput.CaskID)
+	for i, s := range orderInput.CaskID{
+		CaskAsBytes, err := ctx.GetStub().GetState(("CASK"+s))
+		if err != nil {
+			return fmt.Errorf("Failed to Check Cask ID:" + err.Error())
+		} else if CaskAsBytes == nil {
+			return fmt.Errorf("Cask does not exist: " + s, i)
+		}
 	}
 
 	// ==== Check if order already exists ====
 	OrderID := ("BOTTLE"+orderInput.BottleID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -1335,7 +1361,7 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -1351,7 +1377,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 	fmt.Println("Failed: ", msp)
 	//TODO: SETUP TO LIMIT ONLY Botteling
 
-	if msp == "supplier-supply-com" {
+	if msp == "bottling-supply-com" {
 		
 		if len(BottleID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -1361,7 +1387,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 		}
 
 		OrderID := ("BOTTLE"+BottleID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1380,7 +1406,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 		orderToUpdate.Status = "Palleted"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1394,7 +1420,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 func (s *SmartContract) ReadBottle(ctx contractapi.TransactionContextInterface, BottleID string) (*Bottling, error) {
 
 	OrderID := ("BOTTLE"+BottleID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -1408,11 +1434,13 @@ func (s *SmartContract) ReadBottle(ctx contractapi.TransactionContextInterface, 
 	return order, nil
 }
 
-func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, BottleID string) (*BottleLife, error) {
+func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, BottleID string) (*BottleLifeModel, error) {
+
+	lifecycle := new(BottleLifeModel)
 
 	//Get Bottle Info 
 	BottleIDN := ("BOTTLE"+BottleID) 
-	BottleJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", BottleIDN)
+	BottleJSON, err := ctx.GetStub().GetState(BottleIDN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
 	}
@@ -1423,76 +1451,82 @@ func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, 
 	bottle := new(Bottling)
 	_ = json.Unmarshal(BottleJSON, bottle)
 
+	lifecycle.BottleID = bottle.BottleID
+
+	lifecycle.Casks = make([]CaskLifeModel, 0)
+
 	//Get Cask Info 
-	CASKIDN := ("CASK"+bottle.CaskID) 
-	CaskJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", CASKIDN)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
+	for i, iCask := range bottle.CaskID{
+		CASKIDN := ("CASK"+iCask) 
+		CaskJSON, err := ctx.GetStub().GetState(CASKIDN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from cask %s", err.Error())
+		}
+		if CaskJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", CASKIDN, i)
+		}
+
+		cask := new(Maturation)
+		_ = json.Unmarshal(CaskJSON, cask)
+
+
+
+
+		//Get Batch Info 
+		BatchIDN := ("BATCH"+cask.BatchID) 
+		BatchJSON, err := ctx.GetStub().GetState(BatchIDN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
+		}
+		if BatchJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", BatchIDN)
+		}
+
+		batch := new(Distillation)
+		_ = json.Unmarshal(BatchJSON, batch)
+
+		//Get Malt Info 
+		MaltIDN := ("MALT"+batch.MaltOrderID) 
+		MaltJSON, err := ctx.GetStub().GetState(MaltIDN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
+		}
+		if MaltJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", MaltIDN)
+		}
+
+		malt := new(MaltOrder)
+		_ = json.Unmarshal(MaltJSON, malt)
+
+		//Get Barley Info 
+		BarleyIDN := ("BARLEY"+malt.BarleyOrderID) 
+		BarleyJSON, err := ctx.GetStub().GetState(BarleyIDN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
+		}
+		if BarleyJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", BarleyIDN)
+		}
+
+		barley := new(BarleyOrder)
+		_ = json.Unmarshal(BarleyJSON, barley)
+
+		thisCask := new(CaskLifeModel)
+		thisCask.CaskID = cask.CaskID
+		thisCask.QCPass = cask.QCPass
+		thisCask.BatchID = cask.BatchID
+		thisCask.BatchQCPass = batch.QCPass
+		thisCask.MaltID = batch.MaltOrderID
+		thisCask.MaltQCPass = malt.QCPass
+		thisCask.BarleyOrderID = malt.BarleyOrderID
+		thisCask.Producer = barley.Producer
+		thisCask.SoilPH = barley.SoilPH
+		thisCask.GeoLocation = barley.GeoLocation
+		
+		lifecycle.Casks = append(lifecycle.Casks, *thisCask)
 	}
-	if CaskJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", CASKIDN)
-	}
 
-	cask := new(Maturation)
-	_ = json.Unmarshal(CaskJSON, cask)
-
-	//Get Batch Info 
-	BatchIDN := ("BATCH"+cask.BatchID) 
-	BatchJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", BatchIDN)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
-	}
-	if BatchJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", BatchIDN)
-	}
-
-	batch := new(Distillation)
-	_ = json.Unmarshal(BatchJSON, batch)
-
-	//Get Malt Info 
-	MaltIDN := ("MALT"+batch.MaltOrderID) 
-	MaltJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", MaltIDN)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
-	}
-	if MaltJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", MaltIDN)
-	}
-
-	malt := new(MaltOrder)
-	_ = json.Unmarshal(MaltJSON, malt)
-
-	//Get Barley Info 
-	BarleyIDN := ("BARLEY"+malt.BarleyOrderID) 
-	BarleyJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", BarleyIDN)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from bottle %s", err.Error())
-	}
-	if BarleyJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", BarleyIDN)
-	}
-
-	barley := new(BarleyOrder)
-	_ = json.Unmarshal(BarleyJSON, barley)
-
-	life := new(BottleLife)
-	
-	life.BottleID = bottle.BottleID
-	life.Producer = barley.Producer
-	life.ProducerQCPass = barley.QCPass
-	life.MaltOrderID = malt.MaltOrderID
-	life.MaltQCPass = malt.QCPass
-	life.BatchID = batch.BatchID
-	life.BatchQCPass = batch.QCPass
-	life.CaskID = cask.CaskID
-	life.CaskQCPass = cask.QCPass
-	life.MaturationStart = cask.StartDate
-	life.MaturationEnd = cask.EndDate
-	life.QCNotes = cask.Notes
-	life.QCTaste = cask.Taste
-	life.PalletID = bottle.PalletID
-
-	return life, nil
+	return lifecycle, nil
 }
 
 func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterface) error {
@@ -1526,7 +1560,7 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 
 	// ==== Check if order already exists ====
 	OrderID := ("PALLET"+orderInput.RetailerOrderID) 
-	orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return fmt.Errorf("Failed to get order: " + err.Error())
 	} else if orderAsBytes != nil {
@@ -1549,7 +1583,7 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 	}
 
 	// === Save order to state ===
-	err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
@@ -1563,8 +1597,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 		return fmt.Errorf("Error getting transient: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY FOR DISTILLERY
-	if msp == "supplier-supply-com" {
+	if msp == "distillery-supply-com" {
 		transMap, err := ctx.GetStub().GetTransient()
 		if err != nil {
 			return fmt.Errorf("Error getting transient: " + err.Error())
@@ -1602,7 +1635,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		orderAsBytes, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("Failed to get order:" + err.Error())
 		} else if orderAsBytes == nil {
@@ -1619,7 +1652,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 		orderToUpdate.PalletID = OrderInput.PalletID
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1638,7 +1671,6 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 
 		//TODO: - SPLIT FOR THE TWO DIFFERENT RETAILERS WITH AN IF BASED ON OWNER
 		// OF ORDER MAYBE ADD MSP TO ORIGIONAL ORDER JSON
-
 		err = ctx.GetStub().PutPrivateData("collectionPrivateRetailer1-Orders", OrderID, orderPrivJSONasBytes)
 
 		if err != nil {
@@ -1659,16 +1691,14 @@ func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY DISTILLERY
-
-	if msp == "supplier-supply-com" {
+	if msp == "bottling-supply-com" {
 		
 		if len(RetailerOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 
 		OrderID := ("PALLET"+RetailerOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1685,7 +1715,7 @@ func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInte
 		orderToUpdate.Status = "Shipped"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1702,15 +1732,14 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SET FOR RETAILERS MSP
-	if msp == "supplier-supply-com" {
+	if (msp == "retailer1-supply-com" || msp == "retailer2-supply-com") {
 		
 		if len(RetailerOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
 		
 		OrderID := ("PALLET"+RetailerOrderID) 
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
@@ -1728,7 +1757,7 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
-		err = ctx.GetStub().PutPrivateData("collectionWhiskeySupplyChain", OrderID, orderJSONasBytes)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
@@ -1742,7 +1771,7 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerOrder, error) {
 
 	OrderID := ("PALLET"+RetailerOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionWhiskeySupplyChain", OrderID)
+	orderJSON, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
@@ -1757,10 +1786,29 @@ func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInte
 }
 
 func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerPrivateOrder, error) {
-
-	//TODO: Filter Based On Feedback From Correct Group
 	OrderID := ("PALLET"+RetailerOrderID) 
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+
+
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+
+	if (msp == "distillery-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+		if orderJSON == nil {
+			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
+		}
+	}
+
+	if (msp == "retailer1-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+	}
+	if (msp == "retailer2-supply-com") {
+		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
