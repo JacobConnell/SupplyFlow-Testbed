@@ -1,0 +1,117 @@
+[
+    {
+       "name": "collectionPublic",
+       "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+       "requiredPeerCount": 0,
+       "maxPeerCount": 3,
+       "blockToLive":1000000,
+       "memberOnlyRead": true
+    },
+    {
+       "name": "collectionPrivate",
+       "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+       "requiredPeerCount": 0,
+       "maxPeerCount": 3,
+       "blockToLive":30,
+       "memberOnlyRead": true
+    },
+   
+    {
+      "name": "collectionBarleyOrders",
+      "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+      "requiredPeerCount": 0,
+      "maxPeerCount": 3,
+      "blockToLive":1000000,
+      "memberOnlyRead": true
+   },
+    {
+      "name": "collectionPrivateProducer1-Orders",
+      "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+      "requiredPeerCount": 0,
+      "maxPeerCount": 3,
+      "blockToLive":3,
+      "memberOnlyRead": true
+    },
+    {
+     "name": "collectionPrivateProducer2-Orders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionPrivateMalt-Orders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionMaltOrders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionDistillery",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionMaturation",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionBottling",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionRetailerOrders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionPrivateRetailer1-Orders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionPrivateRetailer2-Orders",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   },
+   {
+     "name": "collectionRetailerSales",
+     "policy": "OR( 'distillery-supply-com.member', 'shop-supply-com.member', 'supplier-supply-com.member' )",
+     "requiredPeerCount": 0,
+     "maxPeerCount": 3,
+     "blockToLive":3,
+     "memberOnlyRead": true
+   }
+   ]
+   
+   
