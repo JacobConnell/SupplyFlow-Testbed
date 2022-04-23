@@ -289,10 +289,10 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 		} else {
 			return fmt.Errorf("Producer Does Not Match")
 		}
+		return nil 
 	} else {
-		return fmt.Errorf("Wrong MSP - Access Deinied")}
+		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) error {
@@ -332,11 +332,12 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 				return err
 			}
 		} else {
-			return fmt.Errorf("Producer Does Not Match"}
+			return fmt.Errorf("Producer Does Not Match")
+		}
+		return nil 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string, Accepted string) error {
@@ -374,11 +375,10 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 		if err != nil {
 			return err
 		}
-
+		return nil 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyOrder, error) {
@@ -404,31 +404,40 @@ func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContex
 
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
-		return fmt.Errorf("Error getting MSPID: " + err.Error())
+		return nil, fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
 
+	orderJSON := []byte{}
+
 	if (msp == "malting-supply-com") {
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+		orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
 		if orderJSON == nil {
 			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
 		}
 	}
 
 	if (msp == "producer1-supply-com") {
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+		orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer1-Orders", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", BarleyOrderID)
+		}
 	}
 	if (msp == "producer2-supply-com") {
-		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+		orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateProducer2-Orders", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", BarleyOrderID)
+		}
 	}
 
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from order %s", err.Error())
-	}
-	if orderJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", BarleyOrderID)
-	}
+
 
 	Privorder := new(BarleyPrivateOrder)
 	_ = json.Unmarshal(orderJSON, Privorder)
@@ -588,12 +597,11 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 			return fmt.Errorf("failed to put Order: %s", err.Error())
 		}
 
-		//ELSE ERROR
+		return nil
 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) error {
@@ -631,10 +639,11 @@ func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterfac
 			return err
 		}
 
+		return nil
+		
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string, Accepted string, QC string) error {
@@ -674,10 +683,11 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 			return err
 		}
 
+		return nil
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaltOrder, error) {
@@ -825,10 +835,11 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 
@@ -875,10 +886,11 @@ func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterf
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterface, BatchID string, QC string) error {
@@ -925,10 +937,11 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInterface, BatchID string) error {
@@ -971,10 +984,11 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, BatchID string) (*Distillation, error) {
@@ -1110,10 +1124,11 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterface, CaskID string, QC string, Notes string, Taste string) error {
@@ -1167,10 +1182,11 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterface, CaskID string) error {
@@ -1224,10 +1240,11 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInterface, CaskID string) error {
@@ -1269,10 +1286,11 @@ func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInter
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, CaskID string) (*Maturation, error) {
@@ -1411,10 +1429,11 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadBottle(ctx contractapi.TransactionContextInterface, BottleID string) (*Bottling, error) {
@@ -1677,12 +1696,11 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 			return fmt.Errorf("failed to put Order: %s", err.Error())
 		}
 
-		//ELSE ERROR
+		return nil 
 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) error {
@@ -1719,6 +1737,8 @@ func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInte
 		if err != nil {
 			return err
 		}
+
+		return nil 
 
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
@@ -1762,10 +1782,11 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 			return err
 		}
 
+		return nil 
+
 	} else {
 		return fmt.Errorf("Wrong MSP - Access Deinied")
 	}
-	return nil
 }
 
 func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerOrder, error) {
@@ -1791,30 +1812,44 @@ func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionCont
 
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
-		return fmt.Errorf("Error getting MSPID: " + err.Error())
+		return nil, fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-
+	orderJSON := []byte{}
 	if (msp == "distillery-supply-com") {
 		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
 		if orderJSON == nil {
 			orderJSON, err = ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
 		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", RetailerOrderID)
+		}
 	}
 
 	if (msp == "retailer1-supply-com") {
 		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer1-Orders", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", RetailerOrderID)
+		}
+	
 	}
 	if (msp == "retailer2-supply-com") {
 		orderJSON, err := ctx.GetStub().GetPrivateData("collectionPrivateRetailer2-Orders", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", RetailerOrderID)
+		}
+	
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from order %s", err.Error())
-	}
-	if orderJSON == nil {
-		return nil, fmt.Errorf("%s does not exist", RetailerOrderID)
-	}
 
 	Privorder := new(RetailerPrivateOrder)
 	_ = json.Unmarshal(orderJSON, Privorder)

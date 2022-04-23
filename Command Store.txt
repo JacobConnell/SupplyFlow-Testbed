@@ -23,7 +23,7 @@ docker run \
     prom/prometheus
 
 
-./supplyflow install -n supplyflow -r true
+./supplyflow install -n supplyflow -r true -v 1.0
 
 ./supplyflow approve,commit,initialize -p ''
 
