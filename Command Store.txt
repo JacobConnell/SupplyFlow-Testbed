@@ -30,6 +30,9 @@ docker run \
 
 Order=$( echo '{"BarleyOrderID":"222","Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
 
+Order=$( echo '{"BarleyOrderID":"123","Size":"5OKilo", "Producer":"producer1", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+
+
 Order=$( echo '{"BarleyOrderID":"111","Size":"49Kilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
 
 ./supplyflow invoke -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
@@ -54,6 +57,13 @@ Order=$( echo '{"BarleyOrderID":"111", "Status":"Will Do", "Price":2, "InvoiceID
 ./supplyflow invoke -p '"ShipBarleyOrder","222"' -t ''
 ./supplyflow invoke -p '"ShipBarleyOrder","111"' -t ''
 
+
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
+./supplyflow invoke -p '"ShipBarleyOrder","123"' -t '' -o producer1.supply.com
 
 
 

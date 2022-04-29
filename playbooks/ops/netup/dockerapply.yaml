@@ -45,6 +45,7 @@
     -v {{ mpath }}/{{item.org}}/peers/{{item.fullname}}/msp:/etc/hyperledger/fabric/msp
     -v {{ mpath }}/{{item.org}}/peers/{{item.fullname}}/tls:/etc/hyperledger/fabric/tls
     -v {{ item.fullname }}:/var/hyperledger/production
+
     {{ container_options }}
     hyperledger/fabric-peer:{{ fabric.release }} peer node start
   with_items: "{{ allpeers }}"

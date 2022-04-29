@@ -1,225 +1,233 @@
-/*
-Copyright 2021 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
-
 package main
 
 import (
-	"bytes"
-	"context"
-	"crypto/x509"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	gwproto "github.com/hyperledger/fabric-protos-go/gateway"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"log"
-	"path"
+	"github.com/google/uuid"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
+	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	rmsp "github.com/hyperledger/fabric-sdk-go/pkg/msp"
+	"math/rand"
+	"os"
+	"reflect"
+	"strconv"
+	"sync"
 	"time"
 )
 
 const (
-	mspID         = "Org1MSP"
-	cryptoPath    = "/home/vars/test-network/organizations/peerOrganizations/org1.example.com"
-	certPath      = cryptoPath + "/users/User1@org1.example.com/msp/signcerts/cert.pem"
-	keyPath       = cryptoPath + "/users/User1@org1.example.com/msp/keystore/"
-	tlsCertPath   = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
-	peerEndpoint  = "peer1.distillery.supply.com:7051"
-	gatewayPeer   = "peer1.distillery.supply.com"
-	channelName   = "supplychain"
-	chaincodeName = "supplyflow"
+	ccID      = "simple"
+	channelID = "mychannel"
+	orgName   = "distillery.supply.com"
+	orgAdmin  = "Admin"
 )
 
-var now = time.Now()
-var assetId = fmt.Sprintf("111")
+func doEnroll() {
+	//Load configuration from connection profile
+	cnfg := config.FromFile("./connection.json")
+	sdk, err := fabsdk.New(cnfg)
+	if err != nil {
+		fmt.Printf("Failed to create new SDK: %s", err)
+		return
+	}
+	defer sdk.Close()
+
+	// Try to get some configuration data from the connection profile
+	sdkcfg, _ := sdk.Config()
+	idcfg, _ := rmsp.ConfigFromBackend(sdkcfg)
+	caconfig, ok := idcfg.CAConfig("ca1.distillery.supply.com")
+	if !ok {
+		fmt.Println("Could not get the caconfiguration.")
+		return
+	}
+	fmt.Println(caconfig.Registrar.EnrollID)
+	fmt.Println(caconfig.Registrar.EnrollSecret)
+
+	ctxProvider := sdk.Context()
+	mspClient, err := msp.New(ctxProvider)
+	if err != nil {
+		fmt.Printf("Failed to create new msp client: %s", err)
+		return
+	}
+
+	// Now try to enroll the admin with its configured ID and password
+	err = mspClient.Enroll(caconfig.Registrar.EnrollID, msp.WithSecret(caconfig.Registrar.EnrollSecret))
+	if err != nil {
+		fmt.Printf("Failed to enroll the admin: %s", err)
+		return
+	}
+	fmt.Println("Enrollment is fine")
+
+	// Try to query all identities
+	fmt.Println(reflect.TypeOf(mspClient))
+	ids, err := mspClient.GetAllIdentities()
+	if err != nil {
+		fmt.Printf("Failed to get all ids: %s", err)
+		return
+	}
+
+	for _, id := range ids {
+		fmt.Printf("an id %v", id.ID)
+	}
+
+	//Register a new user
+	username := "user" + strconv.Itoa(rand.Intn(500000))
+	userpw, err := mspClient.Register(&msp.RegistrationRequest{Name: username})
+	if err != nil {
+		fmt.Printf("Failed to get all ids: %s", err)
+		return
+	}
+	fmt.Printf("The new user %v", userpw)
+
+	//Enroll with returned password
+	err = mspClient.Enroll(username, msp.WithSecret(userpw))
+	if err != nil {
+		fmt.Printf("Failed to enroll the admin: %s", err)
+		return
+	}
+	fmt.Println("Enrollment is fine")
+}
+
+func useClientExecute(index int) {
+	cnfg := config.FromFile("./connection.json")
+	fmt.Println(reflect.TypeOf(cnfg))
+	sdk, err := fabsdk.New(cnfg)
+	if err != nil {
+		fmt.Printf("Failed to create new SDK: %s", err)
+	}
+	defer sdk.Close()
+	clientChannelContext := sdk.ChannelContext(channelID, fabsdk.WithUser(orgAdmin), fabsdk.WithOrg(orgName))
+	client, err := channel.New(clientChannelContext)
+	if err != nil {
+		fmt.Printf("Failed to create new channel client: %s", err)
+	} else {
+		fmt.Println(reflect.TypeOf(client))
+	}
+
+	start := time.Now()
+	var defaultTxArgs = [][]byte{[]byte("put"), []byte("somekey"), []byte(strconv.Itoa(index))}
+
+	_, err = client.Execute(channel.Request{ChaincodeID: ccID, Fcn: "invoke", Args: defaultTxArgs},
+		channel.WithRetry(retry.DefaultChannelOpts))
+	if err != nil {
+		fmt.Printf("Failed to move funds: %v", err)
+	}
+
+	fmt.Println("The time took is ", time.Now().Sub(start))
+}
+
+func useGateway() {
+	gw, err := gateway.Connect(
+		gateway.WithConfig(config.FromFile("./connection.json")),
+		gateway.WithUser("Admin"),
+	)
+
+	if err != nil {
+		fmt.Printf("Failed to connect: %v", err)
+	}
+
+	if gw == nil {
+		fmt.Println("Failed to create gateway")
+	}
+
+	network, err := gw.GetNetwork("mychannel")
+	if err != nil {
+		fmt.Printf("Failed to get network: %v", err)
+	}
+
+	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	contract := network.GetContract("samplecc")
+	uuid.SetRand(nil)
+
+	var wg sync.WaitGroup
+	start := time.Now()
+	for i := 1; i <= 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			seededRand.Intn(20)
+			result, err := contract.SubmitTransaction("invoke", "put", uuid.New().String(),
+				strconv.Itoa(seededRand.Intn(20)))
+			if err != nil {
+				fmt.Printf("Failed to commit transaction: %v", err)
+			} else {
+				fmt.Println("Commit is successful")
+			}
+
+			fmt.Println(reflect.TypeOf(result))
+			fmt.Printf("The results is %v", result)
+		}()
+	}
+	wg.Wait()
+	fmt.Println("The time took is ", time.Now().Sub(start))
+}
+
+/*
+To run this app, make sure that one of the wallet files such as Admin.id from
+vars/profiles/vscode/wallets directory is copied onto ./wallets directory,
+then this example code will use the wallet file and connection file to make
+connections to Fabric network
+*/
+func useWalletGateway() {
+	wallet, err := gateway.NewFileSystemWallet("./wallets")
+	if err != nil {
+		fmt.Printf("Failed to create wallet: %s\n", err)
+		os.Exit(1)
+	}
+
+	if !wallet.Exists("Admin") {
+		fmt.Println("Failed to get Admin from wallet")
+		os.Exit(1)
+	}
+
+	gw, err := gateway.Connect(
+		gateway.WithConfig(config.FromFile("./connection.json")),
+		gateway.WithIdentity(wallet, "Admin"),
+	)
+
+	if err != nil {
+		fmt.Printf("Failed to connect: %v", err)
+	}
+
+	if gw == nil {
+		fmt.Println("Failed to create gateway")
+	}
+
+	network, err := gw.GetNetwork("mychannel")
+	if err != nil {
+		fmt.Printf("Failed to get network: %v", err)
+	}
+
+	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	contract := network.GetContract("samplecc")
+	uuid.SetRand(nil)
+
+	var wg sync.WaitGroup
+	start := time.Now()
+	for i := 1; i <= 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			seededRand.Intn(20)
+			result, err := contract.SubmitTransaction("invoke", "put", uuid.New().String(),
+				strconv.Itoa(seededRand.Intn(20)))
+			if err != nil {
+				fmt.Printf("Failed to commit transaction: %v", err)
+			} else {
+				fmt.Println("Commit is successful")
+			}
+
+			fmt.Println(reflect.TypeOf(result))
+			fmt.Printf("The results is %v", result)
+		}()
+	}
+	wg.Wait()
+	fmt.Println("The time took is ", time.Now().Sub(start))
+}
 
 func main() {
-	log.Println("============ application-golang starts ============")
-
-	// The gRPC client connection should be shared by all Gateway connections to this endpoint
-	clientConnection := newGrpcConnection()
-	defer clientConnection.Close()
-
-	id := newIdentity()
-	sign := newSign()
-
-	// Create a Gateway connection for a specific client identity
-	gateway, err := client.Connect(
-		id,
-		client.WithSign(sign),
-		client.WithClientConnection(clientConnection),
-		// Default timeouts for different gRPC calls
-		client.WithEvaluateTimeout(5*time.Second),
-		client.WithEndorseTimeout(15*time.Second),
-		client.WithSubmitTimeout(5*time.Second),
-		client.WithCommitStatusTimeout(1*time.Minute),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer gateway.Close()
-
-	network := gateway.GetNetwork(channelName)
-	contract := network.GetContract(chaincodeName)
-
-	// fmt.Println("createBatch:")
-	// createAsset(contract)
-
-	// fmt.Println("getAllBatches:")
-	// getAllAssets(contract)
-
-
-	fmt.Println("readBatchByID:")
-	readAssetByID(contract)
-
-/* 	fmt.Println("transferAssetAsync:")
-	transferAssetAsync(contract)
-
-	fmt.Println("exampleErrorHandling:")
-	exampleErrorHandling(contract) */
-
-	log.Println("============ application-golang ends ============")
-}
-
-// newGrpcConnection creates a gRPC connection to the Gateway server.
-func newGrpcConnection() *grpc.ClientConn {
-	certificate, err := loadCertificate(tlsCertPath)
-	if err != nil {
-		panic(err)
-	}
-
-	certPool := x509.NewCertPool()
-	certPool.AddCert(certificate)
-	transportCredentials := credentials.NewClientTLSFromCert(certPool, gatewayPeer)
-
-	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
-	if err != nil {
-		panic(fmt.Errorf("failed to create gRPC connection: %w", err))
-	}
-
-	return connection
-}
-
-// newIdentity creates a client identity for this Gateway connection using an X.509 certificate.
-func newIdentity() *identity.X509Identity {
-	certificate, err := loadCertificate(certPath)
-	if err != nil {
-		panic(err)
-	}
-
-	id, err := identity.NewX509Identity(mspID, certificate)
-	if err != nil {
-		panic(err)
-	}
-
-	return id
-}
-
-func loadCertificate(filename string) (*x509.Certificate, error) {
-	certificatePEM, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read certificate file: %w", err)
-	}
-	return identity.CertificateFromPEM(certificatePEM)
-}
-
-// newSign creates a function that generates a digital signature from a message digest using a private key.
-func newSign() identity.Sign {
-	files, err := ioutil.ReadDir(keyPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to read private key directory: %w", err))
-	}
-	privateKeyPEM, err := ioutil.ReadFile(path.Join(keyPath, files[0].Name()))
-
-	if err != nil {
-		panic(fmt.Errorf("failed to read private key file: %w", err))
-	}
-
-	privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
-	if err != nil {
-		panic(err)
-	}
-
-	sign, err := identity.NewPrivateKeySign(privateKey)
-	if err != nil {
-		panic(err)
-	}
-
-	return sign
-}
-
-
-// Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func createAsset(contract *client.Contract) {
-	fmt.Printf("Submit Transaction: CreateAsset, creates new asset with ID, Color, Size, Owner and AppraisedValue arguments \n")
-
-	_, err := contract.SubmitTransaction("CreateAsset", assetId, "yellow", "5", "Tom", "1300")
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
-	}
-
-	fmt.Printf("*** Transaction committed successfully\n")
-}
-
-// Evaluate a transaction by assetID to query ledger state.
-func readBatchByID(contract *client.Contract) {
-	fmt.Printf("Evaluate Transaction: ReadBatch, function returns asset attributes\n")
-
-	evaluateResult, err := contract.EvaluateTransaction("ReadBarleyOrder", assetId)
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-}
-
-
-
-// Submit transaction, passing in the wrong number of arguments ,expected to throw an error containing details of any error responses from the smart contract.
-func exampleErrorHandling(contract *client.Contract) {
-	fmt.Println("Submit Transaction: UpdateAsset asset70, asset70 does not exist and should return an error")
-
-	_, err := contract.SubmitTransaction("UpdateAsset")
-	if err != nil {
-		switch err := err.(type) {
-		case *client.EndorseError:
-			fmt.Printf("Endorse error with gRPC status %v: %s\n", status.Code(err), err)
-		case *client.SubmitError:
-			fmt.Printf("Submit error with gRPC status %v: %s\n", status.Code(err), err)
-		case *client.CommitStatusError:
-			if errors.Is(err, context.DeadlineExceeded) {
-				fmt.Printf("Timeout waiting for transaction %s commit status: %s", err.TransactionID, err)
-			} else {
-				fmt.Printf("Error obtaining commit status with gRPC status %v: %s\n", status.Code(err), err)
-			}
-		case *client.CommitError:
-			fmt.Printf("Transaction %s failed to commit with status %d: %s\n", err.TransactionID, int32(err.Code), err)
-		}
-		/*
-		 Any error that originates from a peer or orderer node external to the gateway will have its details
-		 embedded within the gRPC status error. The following code shows how to extract that.
-		*/
-		statusErr := status.Convert(err)
-		for _, detail := range statusErr.Details() {
-			errDetail := detail.(*gwproto.ErrorDetail)
-			fmt.Printf("Error from endpoint: %s, mspId: %s, message: %s\n", errDetail.Address, errDetail.MspId, errDetail.Message)
-		}
-	}
-}
-
-//Format JSON data
-func formatJSON(data []byte) string {
-	var prettyJSON bytes.Buffer
-	if err := json.Indent(&prettyJSON, data, " ", ""); err != nil {
-		panic(fmt.Errorf("failed to parse JSON: %w", err))
-	}
-	return prettyJSON.String()
+	useWalletGateway()
 }

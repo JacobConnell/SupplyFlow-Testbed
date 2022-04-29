@@ -1315,6 +1315,7 @@ func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, Ca
 func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Bottling
 	//TODO: Private Cask Data
+	//TODO: BOTTLE AGE
 	transMap, err := ctx.GetStub().GetTransient()
 	if err != nil {
 		return fmt.Errorf("Error getting transient: " + err.Error())
@@ -1654,6 +1655,10 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
+	/* 	if len(OrderInput.Salt) =< 25 {
+			return fmt.Errorf("Security Error - Salt Required From Client")
+		} */
+
 		orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 		if err != nil {
 			return fmt.Errorf("Failed to get order:" + err.Error())
@@ -1753,7 +1758,7 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 	}
 	fmt.Println("Failed: ", msp)
 	if (msp == "retailer1-supply-com" || msp == "retailer2-supply-com") {
-		
+		//TODO: Retailer Check On Item Before Allowing Update
 		if len(RetailerOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
 		}
