@@ -15,9 +15,9 @@ class MyWorkload extends WorkloadModuleBase {
         const randomId = Math.floor(Math.random()*this.roundArguments.randomSeed);
         const myArgs = {
             contractId: this.roundArguments.contractId,
-            contractFunction: 'invoke',
+            contractFunction: 'TestCaliper',
             invokerIdentity: this.roundArguments.userID,
-            contractArguments: ['put', `${this.workerIndex}_${this.roundIndex}_${randomId}`, `${this.workerIndex}_${randomId}_${randomId}`],
+            contractArguments: [`${this.workerIndex}_${randomId}_${randomId}`],
             readOnly: false
         };
 

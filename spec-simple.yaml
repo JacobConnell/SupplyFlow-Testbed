@@ -1,0 +1,23 @@
+fabric:
+  cas:
+  - "ca1.distillery.supply.com"
+  - "ca1.producer1.supply.com"
+  peers: 
+  - "peer1.distillery.supply.com"
+  - "peer2.distillery.supply.com"
+  - "peer1.producer1.supply.com"
+  orderers:
+  - "orderer1.supply.com"
+  - "orderer2.supply.com"
+  - "orderer3.supply.com"
+  settings:
+    ca:
+      FABRIC_LOGGING_SPEC: DEBUG
+    peer:
+      FABRIC_LOGGING_SPEC: DEBUG
+    orderer:
+      FABRIC_LOGGING_SPEC: DEBUG
+  
+  netname: "supplychain"
+
+  #container_options: "--log-driver=splunk --log-opt splunk-token=00000000-0000-0000-0000-000000000000 --log-opt splunk-url=https://127.0.0.1:8088 --log-opt splunk-insecureskipverify=True --log-opt splunk-index=docker_logs"

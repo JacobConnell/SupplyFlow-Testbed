@@ -128,6 +128,49 @@ type BottleLifeModel struct {
     Casks []CaskLifeModel `json:"Casks"`
 }
 
+type TestData struct {
+    ObjectType string `json:"docType"` 
+    TestID    string `json:"TestID"`
+}
+
+func (s *SmartContract) TestCaliper(ctx contractapi.TransactionContextInterface, TestID string) error {
+	if len(TestID) == 0 {
+		return fmt.Errorf(" ID field must be a non-empty string")
+	}
+	// ==== Create order object, marshal to JSON, and save to state ====
+	order := &TestData{
+		ObjectType: "TestData",
+		TestID:       TestID,
+	}
+
+	orderJSONasBytes, err := json.Marshal(order)
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+
+	err = ctx.GetStub().PutState(TestID, orderJSONasBytes)
+	if err != nil {
+		return fmt.Errorf("failed to put Data: %s", err.Error())
+	}
+	return nil
+}
+
+func (s *SmartContract) ReadTestCaliper(ctx contractapi.TransactionContextInterface, TestID string) (*TestData, error) {
+
+	orderJSON, err := ctx.GetStub().GetState(TestID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from TestID %s", err.Error())
+	}
+	if orderJSON == nil {
+		return nil, fmt.Errorf("%s does not exist", TestID)
+	}
+
+	order := new(TestData)
+	_ = json.Unmarshal(orderJSON, order)
+
+	return order, nil
+}
+
 //Malting Starts New Barley Order
 func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: CHECK MSP IS OF MALTING AND NO ONE ELSE
@@ -301,7 +344,8 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	if (msp == "producer1-supply-com" || msp == "producer2-supply-com") {
+	//TODO: REMOVE FILTER BYPASS
+	if (msp == "producer1-supply-com" || msp == "producer2-supply-com" || 1 == 1) {
 		
 		if len(BarleyOrderID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -321,7 +365,7 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
-		
+		//TODO: Check is already shipped then don't update
 		prod := strings.Split(msp, "-")
 		if prod[0] == orderToUpdate.Producer {
 			orderToUpdate.Status = "Shipped"
