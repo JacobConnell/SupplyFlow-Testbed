@@ -10,5 +10,6 @@ npx caliper launch manager --caliper-workspace ./ \
   --caliper-bind-sut fabric:{{ sdk_release }} \
   --caliper-flow-only-test --caliper-fabric-gateway-enabled \
   --caliper-fabric-gateway-discovery \
-  --caliper-fabric-gateway-localhost false
+  --caliper-fabric-gateway-localhost false 
+  --caliper-fabric-timeout-invokeorquery 60
 

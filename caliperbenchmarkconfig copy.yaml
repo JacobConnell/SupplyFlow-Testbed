@@ -11,7 +11,7 @@ test:
         rateControl: 
           type: "fixed-rate"
           opts:
-            tps: 25
+            tps: 50
             #transactionLoad: 300
         workload:
           module: /hyperledger/caliper/workspace/app/callback/app.js
