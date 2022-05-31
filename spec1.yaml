@@ -1,0 +1,36 @@
+fabric:
+  cas:
+  - "ca1.distillery.supply.com"
+  - "ca1.producer1.supply.com"
+  - "ca1.producer2.supply.com"
+  - "ca1.malting.supply.com"
+  - "ca1.bottling.supply.com"
+  - "ca1.maturation.supply.com"
+  - "ca1.retailer1.supply.com"
+  - "ca1.retailer2.supply.com"
+  - "ca1.hmrc.supply.com"
+  peers: 
+  - "peer1.distillery.supply.com"
+  - "peer2.distillery.supply.com"
+  - "peer1.producer1.supply.com"
+  - "peer1.producer2.supply.com"
+  - "peer1.malting.supply.com"
+  - "peer2.malting.supply.com"
+  - "peer1.bottling.supply.com"
+  - "peer1.maturation.supply.com"
+  - "peer1.retailer1.supply.com"
+  - "peer1.retailer2.supply.com"
+  - "peer1.hmrc.supply.com"
+  orderers:
+  - "orderer1.supply.com"
+  - "orderer2.supply.com"
+  - "orderer3.supply.com"
+  settings:
+    ca:
+      FABRIC_LOGGING_SPEC: DEBUG
+    peer:
+      FABRIC_LOGGING_SPEC: DEBUG
+    orderer:
+      FABRIC_LOGGING_SPEC: DEBUG
+  
+  netname: "supplychain"

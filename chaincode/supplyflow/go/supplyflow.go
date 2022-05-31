@@ -66,13 +66,18 @@ type Maturation struct {
 	QCPass      string `json:"QCPass"`
 	Status       string    `json:"Status"`
 	Size      string `json:"Size"`
-	StartDate	string `json:"StartDate"`
-	EndDate	string `json:"EndDate"`
 	FinalProof      string `json:"FinalProof"`
 	DutyPaid	string `json:"DutyPaid"`
 	Notes	string `json:"Notes"`
 	Taste	string `json:"Taste"`
-	Age		string `json:"Age"`
+}
+
+type MaturationPrivate struct {
+	ObjectType string `json:"docType"` 
+	CaskID       string `json:"CaskID"`  
+	StartDate	string `json:"StartDate"`
+	EndDate	string `json:"EndDate"`
+	Age		int `json:"Age"`
 }
 
 type Bottling struct {
@@ -81,7 +86,7 @@ type Bottling struct {
 	CaskID       []string `json:"CaskID"`  
 	Status       string    `json:"Status"`
 	Duty	string    `json:"Duty"` 
-	Age	string    `json:"Age"`
+	Age	int    `json:"Age"`
 	Size      string `json:"Size"`
 	PalletID      string `json:"PalletID"`
 }
@@ -123,7 +128,7 @@ type CaskLifeModel struct {
 type BottleLifeModel struct {
     ObjectType string `json:"docType"` 
     BottleID    string `json:"BottleID"`
-	Age		string `json:"Age"`
+	Age		int `json:"Age"`
 	Duty	string `json:"Duty"`
     Casks []CaskLifeModel `json:"Casks"`
 }
@@ -845,7 +850,6 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Distillery
 
 	if msp == "distillery-supply-com" {
 		
@@ -1106,7 +1110,6 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		BatchID:	orderInput.BatchID,
 		Size:       orderInput.Size,
 		Status:      "Casked",
-		StartDate:		"2019-04-03", //time.Now().Format("2006-01-02"), 
 	}
 
 	//TODO SETUP TEST DATA THEN REMOVE THE FIXED DATE VALUE
@@ -1121,6 +1124,26 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
+
+
+	privOrder := &MaturationPrivate{
+		ObjectType: "MaturationPrivate",
+		CaskID:		orderInput.CaskID,
+		StartDate:		"2019-04-03", //time.Now().Format("2006-01-02"), 
+	}
+
+	orderPrivJSONasBytes, err := json.Marshal(privOrder)
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+
+
+	err = ctx.GetStub().PutPrivateData("collectionMaturationPrivate", OrderID, orderPrivJSONasBytes)
+
+	if err != nil {
+		return fmt.Errorf("failed to put Order: %s", err.Error())
+	}
+
 
 	return nil
 }
@@ -1265,24 +1288,49 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 			return fmt.Errorf("Quality Control Not Completed")
 		}
 		orderToUpdate.Status = "Ready For Bottling"
-		orderToUpdate.EndDate = time.Now().Format("2006-01-02")
-
-		end, err := time.Parse("2006-01-02", orderToUpdate.EndDate)
-		if err != nil {
-			return err
-		}
-		start, err := time.Parse("2006-01-02", orderToUpdate.StartDate)
-		if err != nil {
-			return err
-		}
-		hours := end.Sub(start)
-		orderToUpdate.Age = fmt.Sprint("%.2f", (hours.Hours()/24/365))+" Years"
 
 		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
 		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 		if err != nil {
 			return err
 		}
+
+		PrivorderJSON, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return nil, fmt.Errorf("%s does not exist", OrderID)
+		}
+	
+		Privorder := new(MaturationPrivate)
+		_ = json.Unmarshal(PrivorderJSON, PrivorderJSON)
+
+		Privorder.EndDate = time.Now().Format("2006-01-02")
+
+		end, err := time.Parse("2006-01-02", Privorder.EndDate)
+		if err != nil {
+			return err
+		}
+		start, err := time.Parse("2006-01-02", Privorder.StartDate)
+		if err != nil {
+			return err
+		}
+		hours := end.Sub(start)
+		Privorder.Age = fmt.Sprint("%.2f", (hours.Hours()/24/365))
+
+
+	orderPrivJSONasBytes, err := json.Marshal(Privorder)
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+
+
+	err = ctx.GetStub().PutPrivateData("collectionMaturationPrivate", OrderID, orderPrivJSONasBytes)
+
+	if err != nil {
+		return fmt.Errorf("failed to put Order: %s", err.Error())
+	}
 
 		return nil 
 
@@ -1354,12 +1402,27 @@ func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, Ca
 	return order, nil
 }
 
+func (s *SmartContract) ReadPrivateCask(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaturationPrivate, error) {
+
+	OrderID := ("CASK"+MaltOrderID) 
+	orderJSON, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", OrderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from order %s", err.Error())
+	}
+	if orderJSON == nil {
+		return nil, fmt.Errorf("%s does not exist", MaltOrderID)
+	}
+
+	Privorder := new(MaturationPrivate)
+	_ = json.Unmarshal(orderJSON, Privorder)
+
+	return Privorder, nil
+}
+
 //BOTTLING
 
 func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Bottling
-	//TODO: Private Cask Data
-	//TODO: BOTTLE AGE
 	transMap, err := ctx.GetStub().GetTransient()
 	if err != nil {
 		return fmt.Errorf("Error getting transient: " + err.Error())
@@ -1388,6 +1451,7 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 	}
 
 	//Test Batch Exists
+	age := 0
 	for i, s := range orderInput.CaskID{
 		CaskAsBytes, err := ctx.GetStub().GetState(("CASK"+s))
 		if err != nil {
@@ -1395,6 +1459,25 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		} else if CaskAsBytes == nil {
 			return fmt.Errorf("Cask does not exist: " + s, i)
 		}
+
+		CaskID := ("CASK"+s) 
+		PrivCaskJson, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from cask %s", err.Error())
+		}
+		if PrivCaskJson == nil {
+			return nil, fmt.Errorf("%s does not exist", CaskID)
+		}
+
+		Privorder := new(MaturationPrivate)
+		_ = json.Unmarshal(PrivCaskJson, Privorder)
+
+		if age > Privorder.age {
+			age == Privorder.age
+		}
+
+
+
 	}
 
 	// ==== Check if order already exists ====
@@ -1414,6 +1497,7 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		CaskID:	orderInput.CaskID,
 		Size:       orderInput.Size,
 		Status:      "Bottled",
+		Age:	age,
 	}
 
 	//TODO SETUP TEST DATA THEN REMOVE THE FIXED DATE VALUE
@@ -1438,7 +1522,7 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	//TODO: SETUP TO LIMIT ONLY Botteling
+
 
 	if msp == "bottling-supply-com" {
 		
@@ -1516,6 +1600,7 @@ func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, 
 	_ = json.Unmarshal(BottleJSON, bottle)
 
 	lifecycle.BottleID = bottle.BottleID
+	lifecycle.Age = bottle.Age
 
 	lifecycle.Casks = make([]CaskLifeModel, 0)
 
@@ -1534,6 +1619,7 @@ func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, 
 		_ = json.Unmarshal(CaskJSON, cask)
 
 
+		
 
 
 		//Get Batch Info 
