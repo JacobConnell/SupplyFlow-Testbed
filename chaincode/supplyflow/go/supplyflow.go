@@ -1,5 +1,8 @@
 package main
 
+/**
+Imports for key libraries 
+**/
 import (
 	"encoding/json"
 	"fmt"
@@ -9,7 +12,9 @@ import (
 	"strings"
 )
 
-//Barley Orders
+/**
+Data structures used within the methods to parse JSON data. 
+**/
 
 type BarleyOrder struct {
 	ObjectType string `json:"docType"` 
@@ -29,8 +34,6 @@ type BarleyPrivateOrder struct {
 	Price      int    `json:"price"`
 	InvoiceID	int		`json:"InvoiceID"`
 }
-
-//Malting Orders
 
 type MaltOrder struct {
 	ObjectType string `json:"docType"` 
@@ -133,6 +136,12 @@ type BottleLifeModel struct {
     Casks []CaskLifeModel `json:"Casks"`
 }
 
+/**
+Test code used during chaincode development and testing
+of different functionalities . This would be removed in a
+ production version.
+**/
+
 type TestData struct {
     ObjectType string `json:"docType"` 
     TestID    string `json:"TestID"`
@@ -142,12 +151,10 @@ func (s *SmartContract) TestCaliper(ctx contractapi.TransactionContextInterface,
 	if len(TestID) == 0 {
 		return fmt.Errorf(" ID field must be a non-empty string")
 	}
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &TestData{
 		ObjectType: "TestData",
 		TestID:       TestID,
 	}
-
 	orderJSONasBytes, err := json.Marshal(order)
 	if err != nil {
 		return fmt.Errorf(err.Error())
@@ -176,7 +183,12 @@ func (s *SmartContract) ReadTestCaliper(ctx contractapi.TransactionContextInterf
 	return order, nil
 }
 
-//Malting Starts New Barley Order
+
+
+/**
+Method initiates the barley order from the malting mill to a supplier. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: CHECK MSP IS OF MALTING AND NO ONE ELSE
 	transMap, err := ctx.GetStub().GetTransient()
@@ -206,7 +218,6 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Producer field must be a non-empty string")
 	}
 
-	// ==== Check if order already exists ====
 	OrderID := ("BARLEY"+orderInput.BarleyOrderID) 
 	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
@@ -216,7 +227,6 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("This order already exists: " + orderInput.BarleyOrderID)
 	}
 
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &BarleyOrder{
 		ObjectType: "BarleyOrder",
 		BarleyOrderID:       orderInput.BarleyOrderID,
@@ -230,17 +240,19 @@ func (s *SmartContract) InitBarleyOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf(err.Error())
 	}
 
-	// === Save order to state ===
+
 	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
 	}
 
-	// ==== BarleyOrder saved and indexed. Return success ====
-
 	return nil
 }
 
+/**
+Method confirms the barley order by the supplier. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInterface) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -343,6 +355,10 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 	}
 }
 
+/**
+Method ships the barley order by the supplier.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -389,6 +405,10 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 	}
 }
 
+/**
+Method confirms the barley delivery is accepted and updates status.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string, Accepted string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -430,6 +450,9 @@ func (s *SmartContract) AcceptBarleyOrder(ctx contractapi.TransactionContextInte
 	}
 }
 
+/**
+Method reads a given barley order id and returns the structure.
+**/
 func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyOrder, error) {
 
 	OrderID := ("BARLEY"+BarleyOrderID) 
@@ -447,6 +470,9 @@ func (s *SmartContract) ReadBarleyOrder(ctx contractapi.TransactionContextInterf
 	return order, nil
 }
 
+/**
+Method reads a given barley order ids private transaction data and returns the structure.
+**/
 func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContextInterface, BarleyOrderID string) (*BarleyPrivateOrder, error) {
 
 	OrderID := ("BARLEY"+BarleyOrderID) 
@@ -494,7 +520,10 @@ func (s *SmartContract) ReadPrivateBarleyOrder(ctx contractapi.TransactionContex
 	return Privorder, nil
 }
 
-//Distillery Starts New Malt Order
+/**
+Method initiates the malt order from the distillery to the malting mill.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE DISTILLERY
 	transMap, err := ctx.GetStub().GetTransient()
@@ -521,7 +550,6 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("Producer field must be a non-empty string")
 	}
 
-	// ==== Check if order already exists ====
 	OrderID := ("MALT"+orderInput.MaltOrderID) 
 	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
@@ -531,7 +559,6 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("This order already exists: " + orderInput.MaltOrderID)
 	}
 
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &MaltOrder{
 		ObjectType: "MaltOrder",
 		MaltOrderID:       orderInput.MaltOrderID,
@@ -544,7 +571,6 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf(err.Error())
 	}
 
-	// === Save order to state ===
 	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
@@ -553,6 +579,10 @@ func (s *SmartContract) InitMaltOrder(ctx contractapi.TransactionContextInterfac
 	return nil
 }
 
+/**
+Method confirms the malt order by the mill. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInterface) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -597,7 +627,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		//Test Barley Batch Exists
+		
 		BarleyAsBytes, err := ctx.GetStub().GetState(("BARLEY"+OrderInput.BarleyOrderID))
 		if err != nil {
 			return fmt.Errorf("Failed to Check Barley Order:" + err.Error())
@@ -653,6 +683,10 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 	}
 }
 
+/**
+Method ships the malt order by the mill and updates the status. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -695,6 +729,10 @@ func (s *SmartContract) ShipMaltOrder(ctx contractapi.TransactionContextInterfac
 	}
 }
 
+/**
+Method confirms the malt delivery is accepted and updates status.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string, Accepted string, QC string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -739,6 +777,9 @@ func (s *SmartContract) AcceptMaltOrder(ctx contractapi.TransactionContextInterf
 	}
 }
 
+/**
+Method reads a given malt order id and returns the structure.
+**/
 func (s *SmartContract) ReadMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaltOrder, error) {
 
 	OrderID := ("MALT"+MaltOrderID) 
@@ -756,6 +797,9 @@ func (s *SmartContract) ReadMaltOrder(ctx contractapi.TransactionContextInterfac
 	return order, nil
 }
 
+/**
+Method reads a given malt order ids private transaction data and returns the structure.
+**/
 func (s *SmartContract) ReadPrivateMaltOrder(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaltPrivateOrder, error) {
 
 	OrderID := ("MALT"+MaltOrderID) 
@@ -773,7 +817,10 @@ func (s *SmartContract) ReadPrivateMaltOrder(ctx contractapi.TransactionContextI
 	return Privorder, nil
 }
 
-//Distillery Start New Batch
+/**
+Method begins the distilery process taking in transident data.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitBatch(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE DISTILLERY
 	transMap, err := ctx.GetStub().GetTransient()
@@ -844,6 +891,10 @@ func (s *SmartContract) InitBatch(ctx contractapi.TransactionContextInterface) e
 	return nil
 }
 
+/**
+Method allows the distillery to update the progress of the batch. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInterface, BatchID string, Status string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -890,7 +941,10 @@ func (s *SmartContract) UpdateBatchStatus(ctx contractapi.TransactionContextInte
 	}
 }
 
-
+/**
+Method allows the distillery to set the inital proof of the batch. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterface, BatchID string, Proof string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -941,6 +995,10 @@ func (s *SmartContract) SetInitialProof(ctx contractapi.TransactionContextInterf
 	}
 }
 
+/**
+Method allows the distillery to transfer the batch to the warehouse. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterface, BatchID string, QC string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -992,6 +1050,10 @@ func (s *SmartContract) SendToWarehouse(ctx contractapi.TransactionContextInterf
 	}
 }
 
+/**
+Method allows the warehouse to confirm receipt.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInterface, BatchID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1039,6 +1101,9 @@ func (s *SmartContract) AcceptAtWarehouse(ctx contractapi.TransactionContextInte
 	}
 }
 
+/**
+Method reads a given batch order id and returns the structure.
+**/
 func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, BatchID string) (*Distillation, error) {
 
 	OrderID := ("BATCH"+BatchID) 
@@ -1056,6 +1121,10 @@ func (s *SmartContract) ReadBatch(ctx contractapi.TransactionContextInterface, B
 	return order, nil
 }
 
+/**
+Method begins the maturation assigning a cask id. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Maturation
 	transMap, err := ctx.GetStub().GetTransient()
@@ -1085,7 +1154,6 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Producer field must be a non-empty string")
 	}
 
-	//Test Batch Exists
 	MaltAsBytes, err := ctx.GetStub().GetState(("BATCH"+orderInput.BatchID))
 	if err != nil {
 		return fmt.Errorf("Failed to Check Malt Order:" + err.Error())
@@ -1093,7 +1161,6 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Batch does not exist: " + orderInput.BatchID)
 	}
 
-	// ==== Check if order already exists ====
 	OrderID := ("CASK"+orderInput.CaskID) 
 	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
@@ -1103,7 +1170,6 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("This order already exists: " + orderInput.CaskID)
 	}
 
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &Maturation{
 		ObjectType: "Maturation",
 		CaskID:		orderInput.CaskID,
@@ -1112,14 +1178,13 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		Status:      "Casked",
 	}
 
-	//TODO SETUP TEST DATA THEN REMOVE THE FIXED DATE VALUE
+	//TODO: SETUP TEST DATA THEN REMOVE THE FIXED DATE VALUE
 
 	orderJSONasBytes, err := json.Marshal(order)
 	if err != nil {
 		return fmt.Errorf(err.Error())
 	}
 
-	// === Save order to state ===
 	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
@@ -1148,6 +1213,10 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 	return nil
 }
 
+/**
+Method updates the cask with a final proof value. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterface, CaskID string, Proof string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1198,6 +1267,10 @@ func (s *SmartContract) SetFinalProof(ctx contractapi.TransactionContextInterfac
 	}
 }
 
+/**
+Method updates the cask with a quality control value.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterface, CaskID string, QC string, Notes string, Taste string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1256,6 +1329,10 @@ func (s *SmartContract) QualityControl(ctx contractapi.TransactionContextInterfa
 	}
 }
 
+/**
+Method transfers the cask to bottling. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterface, CaskID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1339,6 +1416,10 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 	}
 }
 
+/**
+Method confirms the cask delivery.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInterface, CaskID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1385,6 +1466,9 @@ func (s *SmartContract) AcceptAtBottling(ctx contractapi.TransactionContextInter
 	}
 }
 
+/**
+Method reads a given cask order id and returns the structure.
+**/
 func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, CaskID string) (*Maturation, error) {
 
 	OrderID := ("CASK"+CaskID) 
@@ -1402,6 +1486,9 @@ func (s *SmartContract) ReadCask(ctx contractapi.TransactionContextInterface, Ca
 	return order, nil
 }
 
+/**
+Method reads a given cask order ids private transaction data and returns the structure.
+**/
 func (s *SmartContract) ReadPrivateCask(ctx contractapi.TransactionContextInterface, MaltOrderID string) (*MaturationPrivate, error) {
 
 	OrderID := ("CASK"+MaltOrderID) 
@@ -1419,8 +1506,12 @@ func (s *SmartContract) ReadPrivateCask(ctx contractapi.TransactionContextInterf
 	return Privorder, nil
 }
 
-//BOTTLING
 
+
+/**
+Method begins the bottling process taking data from the casks.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Bottling
 	transMap, err := ctx.GetStub().GetTransient()
@@ -1450,7 +1541,6 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		return fmt.Errorf("Producer field must be a non-empty string")
 	}
 
-	//Test Batch Exists
 	age := 0
 	for i, s := range orderInput.CaskID{
 		CaskAsBytes, err := ctx.GetStub().GetState(("CASK"+s))
@@ -1480,7 +1570,6 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 
 	}
 
-	// ==== Check if order already exists ====
 	OrderID := ("BOTTLE"+orderInput.BottleID) 
 	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
@@ -1490,7 +1579,6 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		return fmt.Errorf("This order already exists: " + orderInput.BottleID)
 	}
 
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &Bottling{
 		ObjectType: "Bottling",
 		BottleID:		orderInput.BottleID,
@@ -1507,7 +1595,6 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		return fmt.Errorf(err.Error())
 	}
 
-	// === Save order to state ===
 	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
@@ -1516,6 +1603,10 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 	return nil
 }
 
+/**
+Method assigns the bottle for logisitics tracking. 
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, BottleID string, PalletID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1565,6 +1656,9 @@ func (s *SmartContract) SetPallet(ctx contractapi.TransactionContextInterface, B
 	}
 }
 
+/**
+Method reads a given bottle id and returns the structure.
+**/
 func (s *SmartContract) ReadBottle(ctx contractapi.TransactionContextInterface, BottleID string) (*Bottling, error) {
 
 	OrderID := ("BOTTLE"+BottleID) 
@@ -1582,6 +1676,10 @@ func (s *SmartContract) ReadBottle(ctx contractapi.TransactionContextInterface, 
 	return order, nil
 }
 
+/**
+Method reads a given bottle id and returns the structure
+or all related elements to that bottle.
+**/
 func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, BottleID string) (*BottleLifeModel, error) {
 
 	lifecycle := new(BottleLifeModel)
@@ -1679,6 +1777,10 @@ func (s *SmartContract) BottleLife(ctx contractapi.TransactionContextInterface, 
 	return lifecycle, nil
 }
 
+/**
+Method initates an order from the retailers.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterface) error {
 	//TODO: MSP MUST BE Retailer
 	transMap, err := ctx.GetStub().GetTransient()
@@ -1708,7 +1810,6 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Shop field must be a non-empty string")
 	}
 
-	// ==== Check if order already exists ====
 	OrderID := ("PALLET"+orderInput.RetailerOrderID) 
 	orderAsBytes, err := ctx.GetStub().GetState(OrderID)
 	if err != nil {
@@ -1718,7 +1819,6 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("This order already exists: " + orderInput.RetailerOrderID)
 	}
 
-	// ==== Create order object, marshal to JSON, and save to state ====
 	order := &RetailerOrder{
 		ObjectType: "RetailerOrder",
 		RetailerOrderID:       orderInput.RetailerOrderID,
@@ -1732,7 +1832,6 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf(err.Error())
 	}
 
-	// === Save order to state ===
 	err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
 	if err != nil {
 		return fmt.Errorf("failed to put Order: %s", err.Error())
@@ -1741,6 +1840,10 @@ func (s *SmartContract) InitPalletOrder(ctx contractapi.TransactionContextInterf
 	return nil
 }
 
+/**
+Method assigns confirms the retailer order.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextInterface) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1784,6 +1887,8 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 		if OrderInput.InvoiceID == 0 {
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
+
+		//TODO: Reimplement 
 
 	/* 	if len(OrderInput.Salt) =< 25 {
 			return fmt.Errorf("Security Error - Salt Required From Client")
@@ -1838,6 +1943,10 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 	}
 }
 
+/**
+Method ships the retailer order and updates the status.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1881,6 +1990,10 @@ func (s *SmartContract) ShipRetailerOrder(ctx contractapi.TransactionContextInte
 	return nil
 }
 
+/**
+Method confirms the order by the retailer.
+This includes MSP validation, integrity checking and blockchain updating.
+**/
 func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
@@ -1924,6 +2037,9 @@ func (s *SmartContract) DeliveredRetailerOrder(ctx contractapi.TransactionContex
 	}
 }
 
+/**
+Method reads a given retail id and returns the structure.
+**/
 func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerOrder, error) {
 
 	OrderID := ("PALLET"+RetailerOrderID) 
@@ -1941,6 +2057,9 @@ func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInte
 	return order, nil
 }
 
+/**
+Method reads a given retail ids private transaction data and returns the structure.
+**/
 func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerPrivateOrder, error) {
 	OrderID := ("PALLET"+RetailerOrderID) 
 
@@ -1992,6 +2111,9 @@ func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionCont
 	return Privorder, nil
 }
 
+/**
+Main function.
+**/
 func main() {
 
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
