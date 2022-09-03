@@ -1,7 +1,7 @@
 package main
 
 /**
-Imports for key libraries -
+Imports for key libraries
 **/
 import (
 	"encoding/json"
@@ -135,6 +135,16 @@ type BottleLifeModel struct {
 	Duty	string `json:"Duty"`
     Casks []CaskLifeModel `json:"Casks"`
 }
+
+type HRMCPrivateModel struct {
+	ObjectType string `json:"docType"` 
+	BottleID       string `json:"BottleID"`  
+	DutyTotal	int `json:"DutyTotal"`
+	PaymentID	string `json:"PaymentID"`
+	Salt	string	`json:"Salt"`
+}
+
+
 
 /**
 Test code used during chaincode development and testing
@@ -2060,7 +2070,7 @@ func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInte
 /**
 Method reads a given retail ids private transaction data and returns the structure.
 **/
-func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerPrivateOrder, error) {
+func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, BottleID string) (*RetailerPrivateOrder, error) {
 	OrderID := ("PALLET"+RetailerOrderID) 
 
 
@@ -2106,6 +2116,177 @@ func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionCont
 
 
 	Privorder := new(RetailerPrivateOrder)
+	_ = json.Unmarshal(orderJSON, Privorder)
+
+	return Privorder, nil
+}
+
+/**
+Method processes a payment for duty as a private transaction between the distillery and hrmc
+**/
+func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) error {
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting transient: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+	if msp == "distillery-supply-com" {
+		transMap, err := ctx.GetStub().GetTransient()
+		if err != nil {
+			return fmt.Errorf("Error getting transient: " + err.Error())
+		}
+
+		transientJSON, ok := transMap["InputJSON"]
+		if !ok {
+			return fmt.Errorf("Bottle not found in the transient map")
+		}
+
+		type DutyInput struct {
+			BottleID	string	`json:"BottleID"`
+			DutyTotal int `json:"Price"`
+			PaymentID int `json:"PaymentID"`
+			Salt	string	`json:"Salt"`
+		}
+
+		var OrderInput DutyInput
+		err = json.Unmarshal(transientJSON, &OrderInput)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+		OrderID := ("BOTTLE"+ OrderInput.BottleID) 
+
+		if len(OrderInput.BottleID) == 0 {
+			return fmt.Errorf("ID field must be a non-empty string")
+		}
+		if OrderInput.DutyTotal == 0 {
+			return fmt.Errorf("Total field must be nill")
+		}
+		if len(OrderInput.PaymentID) == 0 {
+			return fmt.Errorf("PaymentID field must be a non-empty string")
+		}
+
+	 	if len(OrderInput.Salt) =< 25 {
+			return fmt.Errorf("Security Error - Strong Salt Required From Client")
+		} 
+
+		orderAsBytes, err := ctx.GetStub().GetState(OrderID)
+		if err != nil {
+			return fmt.Errorf("Failed to get bottle:" + err.Error())
+		} else if orderAsBytes == nil {
+			return fmt.Errorf("Bottle does not exist: " + OrderInput.BottleID)
+		}
+
+		orderToUpdate := Bottling{}
+		err = json.Unmarshal(orderAsBytes, &orderToUpdate) 
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+		
+		orderToUpdate.Duty = "Pending - Payment Sent"
+
+		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
+		if err != nil {
+			return err
+		}
+
+		privOrder := &HRMCPrivateModel{
+			ObjectType: "HMRCPrivateOrder",
+			BottleID:       OrderInput.BottleID,
+			DutyTotal:       OrderInput.DutyTotal,
+			PaymentID:	OrderInput.PaymentID,
+			Salt:	OrderInput.Salt,
+		}
+
+		orderPrivJSONasBytes, err := json.Marshal(privOrder)
+		if err != nil {
+			return fmt.Errorf(err.Error())
+		}
+
+		err = ctx.GetStub().PutPrivateData("collectionHMRC", OrderID, orderPrivJSONasBytes)
+
+		if err != nil {
+			return fmt.Errorf("failed to put Order: %s", err.Error())
+		}
+
+		return nil 
+
+	} else {
+		return fmt.Errorf("Wrong MSP - Access Deinied")
+	}
+}
+
+/**
+Method publically stamps the bottle digitally as duty paid once HMRC confirm the payment
+**/
+func (s *SmartContract) StampDuty(ctx contractapi.TransactionContextInterface, BottleID string) error {
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+	if msp == "hrmc-supply-com" {
+		
+		if len(BottleID) == 0 {
+			return fmt.Errorf("ID field must be a non-empty string")
+		}
+
+		OrderID := ("BOTTLE"+BottleID) 
+		orderJSON, err := ctx.GetStub().GetState(OrderID)
+		if err != nil {
+			return fmt.Errorf("failed to read from order %s", err.Error())
+		}
+		if orderJSON == nil {
+			return fmt.Errorf("%s does not exist", BottleID)
+		}
+
+		orderToUpdate := Bottling{}
+		err = json.Unmarshal(orderJSON, &orderToUpdate) 
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+		
+		orderToUpdate.Duty = "Stamped - Approved"
+
+		orderJSONasBytes, _ := json.Marshal(orderToUpdate)
+		err = ctx.GetStub().PutState(OrderID, orderJSONasBytes)
+		if err != nil {
+			return err
+		}
+
+		return nil 
+
+	} else {
+		return fmt.Errorf("Wrong MSP - Access Deinied")
+	}
+	return nil
+}
+
+/**
+Recalls the private data for a select duty or payment
+**/
+func (s *SmartContract) ReadHMRCOrder(ctx contractapi.TransactionContextInterface, BottleID string) (*HRMCPrivateModel, error) {
+	OrderID := ("BOTTLE"+BottleID) 
+
+
+	msp, err := cid.GetMSPID(ctx.GetStub())
+	if err != nil {
+		return nil, fmt.Errorf("Error getting MSPID: " + err.Error())
+	}
+	fmt.Println("Failed: ", msp)
+	orderJSON := []byte{}
+
+
+	orderJSON, err := ctx.GetStub().GetPrivateData("collectionHMRC-Orders", OrderID)
+	if err != nil {
+		
+		return nil, fmt.Errorf("failed to read from order %s", err.Error())
+	}
+	if orderJSON == nil {
+		return nil, fmt.Errorf("%s does not exist", BottleID)
+	}
+
+	Privorder := new(HRMCPrivateModel)
 	_ = json.Unmarshal(orderJSON, Privorder)
 
 	return Privorder, nil
