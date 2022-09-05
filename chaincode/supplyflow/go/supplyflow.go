@@ -6,6 +6,7 @@ Imports for key libraries
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"time"
@@ -75,6 +76,7 @@ type Maturation struct {
 	DutyPaid	string `json:"DutyPaid"`
 	Notes	string `json:"Notes"`
 	Taste	string `json:"Taste"`
+	Salt	string	`json:"Salt"`
 }
 
 type MaturationPrivate struct {
@@ -197,6 +199,59 @@ func (s *SmartContract) ReadTestCaliper(ctx contractapi.TransactionContextInterf
 	return order, nil
 }
 
+/**
+Test code for private data collection salting
+**/
+
+func (s *SmartContract) PrivateTest(ctx contractapi.TransactionContextInterface) error {
+
+		transMap, err := ctx.GetStub().GetTransient()
+			if err != nil {
+				return fmt.Errorf("Error getting transient: " + err.Error())
+			}
+
+		transientJSON, ok := transMap["InputJSON"]
+		if !ok {
+			return fmt.Errorf("Data not found in the transient map")
+		}
+
+		type DataStructInput struct {
+			BottleID	string	`json:"BottleID"`
+			DutyTotal int `json:"Price"`
+			PaymentID string `json:"PaymentID"`
+			Salt	string	`json:"Salt"`
+		}
+
+		var OrderInput DataStructInput
+		err = json.Unmarshal(transientJSON, &OrderInput)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
+		}
+
+		privOrder := &HRMCPrivateModel{
+			ObjectType: "HMRCPrivateOrder",
+			BottleID:       OrderInput.BottleID,
+			DutyTotal:       OrderInput.DutyTotal,
+			PaymentID:	OrderInput.PaymentID,
+			Salt:	OrderInput.Salt,
+		}
+
+		orderPrivJSONasBytes, err := json.Marshal(privOrder)
+		if err != nil {
+			return fmt.Errorf(err.Error())
+		}
+
+		err = ctx.GetStub().PutPrivateData("collectionHMRC", OrderInput.BottleID, orderPrivJSONasBytes)
+
+		if err != nil {
+			return fmt.Errorf("failed to put Order: %s", err.Error())
+		}
+
+		return nil 
+
+	
+}
+
 
 /**
 Method initiates the barley order from the malting mill to a supplier. 
@@ -290,6 +345,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			SoilPH      string `json:"SoilPH"`
 			Price int `json:"Price"`
 			InvoiceID int `json:"InvoiceID"`
+			Salt string `json:"Salt"`
 		}
 
 		var OrderInput OrderTransientInput
@@ -309,7 +365,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		if len(OrderInput.Salt) =< 25 {
+		if len(OrderInput.Salt) <= 25 {
 			return fmt.Errorf("Security Error - Strong Salt Required From Client")
 		} 
 
@@ -346,7 +402,7 @@ func (s *SmartContract) ConfirmBarleyOrder(ctx contractapi.TransactionContextInt
 				BarleyOrderID:       OrderInput.BarleyOrderID,
 				Price:       OrderInput.Price,
 				InvoiceID:	OrderInput.InvoiceID,
-				Salt:	OrderInput.Salt
+				Salt:	OrderInput.Salt,
 			}
 
 			orderPrivJSONasBytes, err := json.Marshal(privOrder)
@@ -404,7 +460,10 @@ func (s *SmartContract) ShipBarleyOrder(ctx contractapi.TransactionContextInterf
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
-		//TODO: Check is already shipped then don't update
+
+		if orderToUpdate.Status == "Shipped"{
+			return fmt.Errorf("Error Already Shipped")
+		}
 		prod := strings.Split(msp, "-")
 		if prod[0] == orderToUpdate.Producer {
 			orderToUpdate.Status = "Shipped"
@@ -623,7 +682,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 			BarleyOrderID	string	`json:"BarleyOrderID"`
 			Price int `json:"Price"`
 			InvoiceID int `json:"InvoiceID"`
-			Salt int `json:"Salt"`
+			Salt string `json:"Salt"`
 		}
 
 		var OrderInput OrderTransientInput
@@ -646,7 +705,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		if len(OrderInput.Salt) =< 25 {
+		if len(OrderInput.Salt) <= 25 {
 			return fmt.Errorf("Security Error - Strong Salt Required From Client")
 		} 
 
@@ -685,7 +744,7 @@ func (s *SmartContract) ConfirmMaltOrder(ctx contractapi.TransactionContextInter
 			MaltOrderID:       OrderInput.MaltOrderID,
 			Price:       OrderInput.Price,
 			InvoiceID:	OrderInput.InvoiceID,
-			Salt:	OrderInput.Salt
+			Salt:	OrderInput.Salt,
 		}
 
 		orderPrivJSONasBytes, err := json.Marshal(privOrder)
@@ -1178,7 +1237,7 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("Producer field must be a non-empty string")
 	}
 
-	if len(OrderInput.Salt) =< 25 {
+	if len(orderInput.Salt) <= 25 {
 		return fmt.Errorf("Security Error - Strong Salt Required From Client")
 	} 
 
@@ -1223,7 +1282,7 @@ func (s *SmartContract) InitMaturation(ctx contractapi.TransactionContextInterfa
 		ObjectType: "MaturationPrivate",
 		CaskID:		orderInput.CaskID,
 		StartDate:		"2019-04-03", //time.Now().Format("2006-01-02"), 
-		Salt:	OrderInput.Salt
+		Salt:	orderInput.Salt,
 	}
 
 	orderPrivJSONasBytes, err := json.Marshal(privOrder)
@@ -1403,10 +1462,10 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 
 		PrivorderJSON, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", OrderID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read from order %s", err.Error())
+			return fmt.Errorf("failed to read from order %s", err.Error())
 		}
 		if orderJSON == nil {
-			return nil, fmt.Errorf("%s does not exist", OrderID)
+			return fmt.Errorf("%s does not exist", OrderID)
 		}
 	
 		Privorder := new(MaturationPrivate)
@@ -1424,8 +1483,10 @@ func (s *SmartContract) SendToBottling(ctx contractapi.TransactionContextInterfa
 			return err
 		}
 		hours := end.Sub(start)
-		Privorder.Age = fmt.Sprint("%.2f", (hours.Hours()/24/365))
-
+		Privorder.Age, err = strconv.Atoi(fmt.Sprint("%.2f", (hours.Hours()/24/365)))
+		if err != nil {
+			return fmt.Errorf(err.Error())
+		}
 
 	orderPrivJSONasBytes, err := json.Marshal(Privorder)
 	if err != nil {
@@ -1581,19 +1642,19 @@ func (s *SmartContract) InitBottling(ctx contractapi.TransactionContextInterface
 		}
 
 		CaskID := ("CASK"+s) 
-		PrivCaskJson, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", OrderID)
+		PrivCaskJson, err := ctx.GetStub().GetPrivateData("collectionMaturationPrivate", CaskID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read from cask %s", err.Error())
+			return fmt.Errorf("failed to read from cask %s", err.Error())
 		}
 		if PrivCaskJson == nil {
-			return nil, fmt.Errorf("%s does not exist", CaskID)
+			return fmt.Errorf("%s does not exist", CaskID)
 		}
 
 		Privorder := new(MaturationPrivate)
 		_ = json.Unmarshal(PrivCaskJson, Privorder)
 
-		if age > Privorder.age {
-			age == Privorder.age
+		if age > Privorder.Age {
+			age = Privorder.Age
 		}
 
 
@@ -1919,7 +1980,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 			return fmt.Errorf("InvoiceID field must not be nil")
 		}
 
-		if len(OrderInput.Salt) =< 25 {
+		if len(OrderInput.Salt) <= 25 {
 			return fmt.Errorf("Security Error - Strong Salt Required From Client")
 		} 
 
@@ -1950,7 +2011,7 @@ func (s *SmartContract) ConfirmRetailerOrder(ctx contractapi.TransactionContextI
 			RetailerOrderID:       OrderInput.RetailerOrderID,
 			Price:       OrderInput.Price,
 			InvoiceID:	OrderInput.InvoiceID,
-			Salt:	OrderInput.Salt
+			Salt:	OrderInput.Salt,
 		}
 
 		orderPrivJSONasBytes, err := json.Marshal(privOrder)
@@ -2090,7 +2151,7 @@ func (s *SmartContract) ReadRetailerOrder(ctx contractapi.TransactionContextInte
 /**
 Method reads a given retail ids private transaction data and returns the structure.
 **/
-func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, BottleID string) (*RetailerPrivateOrder, error) {
+func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionContextInterface, RetailerOrderID string) (*RetailerPrivateOrder, error) {
 	OrderID := ("PALLET"+RetailerOrderID) 
 
 
@@ -2164,7 +2225,7 @@ func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) err
 		type DutyInput struct {
 			BottleID	string	`json:"BottleID"`
 			DutyTotal int `json:"Price"`
-			PaymentID int `json:"PaymentID"`
+			PaymentID string `json:"PaymentID"`
 			Salt	string	`json:"Salt"`
 		}
 
@@ -2185,7 +2246,7 @@ func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) err
 			return fmt.Errorf("PaymentID field must be a non-empty string")
 		}
 
-	 	if len(OrderInput.Salt) =< 25 {
+	 	if len(OrderInput.Salt) <= 25 {
 			return fmt.Errorf("Security Error - Strong Salt Required From Client")
 		} 
 
@@ -2215,7 +2276,7 @@ func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) err
 			BottleID:       OrderInput.BottleID,
 			DutyTotal:       OrderInput.DutyTotal,
 			PaymentID:	OrderInput.PaymentID,
-			Salt:	OrderInput.Salt
+			Salt:	OrderInput.Salt,
 		}
 
 		orderPrivJSONasBytes, err := json.Marshal(privOrder)
@@ -2294,12 +2355,12 @@ func (s *SmartContract) ReadHMRCOrder(ctx contractapi.TransactionContextInterfac
 		return nil, fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
+
 	orderJSON := []byte{}
 
-
-	orderJSON, err := ctx.GetStub().GetPrivateData("collectionHMRC-Orders", OrderID)
-	if err != nil {
+	orderJSON, err = ctx.GetStub().GetPrivateData("collectionHMRC-Orders", OrderID)
 		
+	if err != nil {
 		return nil, fmt.Errorf("failed to read from order %s", err.Error())
 	}
 	if orderJSON == nil {

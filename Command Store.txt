@@ -27,6 +27,17 @@ docker run \
 
 ./supplyflow approve,commit,initialize -p ''
 
+#Test Private Store Code Start
+
+Order=$( echo '{"BottleID":"1234","DutyTotal":"3.50", "PaymentID":"11223", "Salt":""}' | base64 | tr -d \\n )
+
+#Test Hash Output
+Order=$( echo '{"ObjectType":"HMRCPrivateOrder","BottleID":"1234567891011","DutyTotal":"3.50", "PaymentID":"11223", "Salt":""}' | base64 | tr -d \\n )
+
+./supplyflow invoke -p '"PrivateTest"' -t '{"InputJSON":"'$Order'"}'
+
+#Test Private Store Code End
+
 Order=$( echo '{"BarleyOrderID":"222","Size":"5OKilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
 
 Order=$( echo '{"BarleyOrderID":"1234","Size":"5OKilo", "Producer":"distillery", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
