@@ -1,0 +1,13 @@
+services:
+    splunk.supply.com:
+        container_name: kali.supply.com
+        image: jasonchaffee/kali-linux:latest
+        ports:
+            - '8005:8005'
+            - '8085:8085'
+        tty: true
+
+#networks:
+   # default:
+        #external: true
+    #    name: supplychain
