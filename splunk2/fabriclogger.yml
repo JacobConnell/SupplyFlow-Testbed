@@ -1,4 +1,0 @@
-fabric:
-    peer: peer0.distillery.supply.com
-    channels:
-        - supplychain
