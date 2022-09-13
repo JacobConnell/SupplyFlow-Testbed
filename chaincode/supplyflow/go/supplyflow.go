@@ -142,7 +142,7 @@ type BottleLifeModel struct {
     Casks []CaskLifeModel `json:"Casks"`
 }
 
-type HRMCPrivateModel struct {
+type HMRCPrivateModel struct {
 	ObjectType string `json:"docType"` 
 	BottleID       string `json:"BottleID"`  
 	DutyTotal	int `json:"DutyTotal"`
@@ -228,7 +228,7 @@ func (s *SmartContract) PrivateTest(ctx contractapi.TransactionContextInterface)
 			return fmt.Errorf("failed to unmarshal JSON: %s", err.Error())
 		}
 
-		privOrder := &HRMCPrivateModel{
+		privOrder := &HMRCPrivateModel{
 			ObjectType: "HMRCPrivateOrder",
 			BottleID:       OrderInput.BottleID,
 			DutyTotal:       OrderInput.DutyTotal,
@@ -2203,7 +2203,7 @@ func (s *SmartContract) ReadPrivateRetailerOrder(ctx contractapi.TransactionCont
 }
 
 /**
-Method processes a payment for duty as a private transaction between the distillery and hrmc
+Method processes a payment for duty as a private transaction between the distillery and HMRC
 **/
 func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) error {
 	msp, err := cid.GetMSPID(ctx.GetStub())
@@ -2271,7 +2271,7 @@ func (s *SmartContract) PayDuty(ctx contractapi.TransactionContextInterface) err
 			return err
 		}
 
-		privOrder := &HRMCPrivateModel{
+		privOrder := &HMRCPrivateModel{
 			ObjectType: "HMRCPrivateOrder",
 			BottleID:       OrderInput.BottleID,
 			DutyTotal:       OrderInput.DutyTotal,
@@ -2306,7 +2306,7 @@ func (s *SmartContract) StampDuty(ctx contractapi.TransactionContextInterface, B
 		return fmt.Errorf("Error getting MSPID: " + err.Error())
 	}
 	fmt.Println("Failed: ", msp)
-	if msp == "hrmc-supply-com" {
+	if msp == "HMRC-supply-com" {
 		
 		if len(BottleID) == 0 {
 			return fmt.Errorf("ID field must be a non-empty string")
@@ -2346,7 +2346,7 @@ func (s *SmartContract) StampDuty(ctx contractapi.TransactionContextInterface, B
 /**
 Recalls the private data for a select duty or payment
 **/
-func (s *SmartContract) ReadHMRCOrder(ctx contractapi.TransactionContextInterface, BottleID string) (*HRMCPrivateModel, error) {
+func (s *SmartContract) ReadHMRCOrder(ctx contractapi.TransactionContextInterface, BottleID string) (*HMRCPrivateModel, error) {
 	OrderID := ("BOTTLE"+BottleID) 
 
 
@@ -2367,7 +2367,7 @@ func (s *SmartContract) ReadHMRCOrder(ctx contractapi.TransactionContextInterfac
 		return nil, fmt.Errorf("%s does not exist", BottleID)
 	}
 
-	Privorder := new(HRMCPrivateModel)
+	Privorder := new(HMRCPrivateModel)
 	_ = json.Unmarshal(orderJSON, Privorder)
 
 	return Privorder, nil

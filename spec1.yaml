@@ -34,3 +34,5 @@ fabric:
       FABRIC_LOGGING_SPEC: DEBUG
   
   netname: "supplychain"
+
+  #container_options: "--log-driver=splunk --log-opt splunk-token=00000000-0000-0000-0000-000000000000 --log-opt splunk-url=http://splunk.supply.com:8088 --log-opt splunk-insecureskipverify=true"

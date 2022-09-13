@@ -2,6 +2,7 @@ services:
     splunk.supply.com:
         container_name: splunk.supply.com
         image: splunk/splunk:8.1
+        hostname: splunk.supply.com
         environment:
             - SPLUNK_START_ARGS=--accept-license
             - SPLUNK_PASSWORD=changeme
@@ -12,14 +13,14 @@ services:
             - '8088:8088'
         volumes:
             - ./tmp/splunk.yml:/tmp/defaults/default.yml
+
     fabric-logger-distillery1.supply.com:
         restart: always
-        depends_on:
-            - splunk.supply.com
         container_name: fabric-logger-distillery1.supply.com
+        hostname: fabric-logger-distillery1.supply.com
         image: ghcr.io/splunkdlt/fabric-logger:latest
         volumes:
-            - ./tmp/networkconfig.yml:/tmp/network-config.yml
+            - ./tmp/networkconfig.yml:/tmp/networkconfig.yml
             - ../vars/keyfiles:/crypto-config
             - ./tmp/fabriclogger.yml:/tmp/fabriclogger.yml
         environment:
@@ -29,42 +30,33 @@ services:
             - FABRIC_CLIENT_CERTFILE=/crypto-config/peerOrganizations/distillery.supply.com/peers/peer1.distillery.supply.com/tls/server.crt
             - FABRIC_MSP=distillery-supply-com
             - FABRIC_LOGGER_USERNAME=Admin
-            - NETWORK_CONFIG=/tmp/network-config.yml
+            - FABRIC_PEER=peer1.distillery.supply.com
+            - NETWORK_CONFIG=/tmp/networkconfig.yml
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
             - SPLUNK_HEC_URL=https://splunk.supply.com:8088
             - SPLUNK_INDEX=hyperledger_logs
-            - SPLUNK_HEC_REJECT_INVALID_CERTS=false
-            - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
-
-    fabric-logger-distillery2.supply.com:
-        restart: always
-        depends_on:
-            - splunk.supply.com
-        container_name: fabric-logger-distillery2.supply.com
-        image: ghcr.io/splunkdlt/fabric-logger:latest
-        volumes:
-            - ./tmp/networkconfig.yml:/tmp/network-config.yml
-            - ../vars/keyfiles:/crypto-config
-            - ./tmp/fabriclogger.yml:/tmp/fabriclogger.yml
-        environment:
-            - FABRIC_KEYFILE=/crypto-config/peerOrganizations/distillery.supply.com/users/Admin@distillery.supply.com/msp/keystore/priv_sk
-            - FABRIC_CERTFILE=/crypto-config/peerOrganizations/distillery.supply.com/users/Admin@distillery.supply.com/msp/signcerts/Admin@distillery.supply.com-cert.pem
-            - FABRIC_CLIENT_KEYFILE=/crypto-config/peerOrganizations/distillery.supply.com/peers/peer2.distillery.supply.com/tls/server.key
-            - FABRIC_CLIENT_CERTFILE=/crypto-config/peerOrganizations/distillery.supply.com/peers/peer.distillery.supply.com/tls/server.crt
-            - FABRIC_MSP=distillery-supply-com
-            - FABRIC_LOGGER_USERNAME=Admin
-            - NETWORK_CONFIG=/tmp/network-config.yml
-            - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
-            - SPLUNK_HEC_URL=https://splunk.supply.com:8088
-            - SPLUNK_INDEX=hyperledger_logs
-            - SPLUNK_HEC_REJECT_INVALID_CERTS=false
-            - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
             - SPLUNK_METRICS_INDEX=hyperledger_metrics
+            - SPLUNK_HEC_REJECT_INVALID_CERTS=false
+            - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
             - PROMETHEUS_DISCOVERY=true
             - PROMETHEUS_ORDERER_PORT=7060
             - PROMETHEUS_PEER_PORT=7061
+            - DISCOVERY_AS_LOCALHOST=false
+
+    cadvisor:
+        image: google/cadvisor:latest # gcr.io/cadvisor/cadvisor:latest for ios
+        privileged: true
+        container_name: cadvisor
+        volumes:
+        - /var/run:/var/run:rw
+        - /sys:/sys:ro
+        - /var/lib/docker/:/var/lib/docker:ro
+        # - /cgroup:/cgroup:ro
+        ports:
+        - 8080:8080
+        restart: always
 
 networks:
     default:
-        external: true
-        name: supplychain
+        external:
+            name: supplychain
