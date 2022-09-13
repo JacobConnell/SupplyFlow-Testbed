@@ -7,29 +7,9 @@ bottling-supply-com
 retailer1-supply-com
 retailer2-supply-com
 
-docker run -d \
-    --name collectorfordocker \
-    --network supplychain \
-    --volume /sys/fs/cgroup:/rootfs/sys/fs/cgroup:ro \
-    --volume /proc:/rootfs/proc:ro \
-    --volume /var/log:/rootfs/var/log:ro \
-    --volume /var/lib/docker/:/rootfs/var/lib/docker/:ro \
-    --volume /var/run/docker.sock:/rootfs/var/run/docker.sock:ro \
-    --volume collector_data:/data/ \
-    --cpus=1 \
-    --cpu-shares=204 \
-    --memory=256M \
-    --restart=always \
-    --env "COLLECTOR__SPLUNK_URL=output.splunk__url=https://splunk.supply.com:8088/services/collector/event/1.0" \
-    --env "COLLECTOR__SPLUNK_TOKEN=output.splunk__token=00000000-0000-0000-0000-000000000000"  \
-    --env "COLLECTOR__SPLUNK_INSECURE=output.splunk__insecure=true"  \
-    --env "COLLECTOR__EULA=general__acceptEULA=true" \
-    --env "COLLECTOR__LICENSE=general__license=Q0NHMkpISFBURlA1QToxMDA6MTY2NTY0NDIzMDo0.OyDqC0s9cWbjRF2tcCCGtn3ygyEViJK6NDULlg.BvC/rAyFGBEEMHmf9t0vcMEygv/VrzQEqLp2RA" \
-    --env "COLLECTOR__CLUSTER=general__fields.docker_cluster=-" \
-    --privileged \
-    outcoldsolutions/collectorfordocker:5.18.381
 
-./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -e true
+
+./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -r true -e true
 
 ./supplyflow netup -o distillery.supply.com -s couchdb -n supplyflow -e true
 
