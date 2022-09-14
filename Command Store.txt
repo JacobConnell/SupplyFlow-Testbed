@@ -7,9 +7,10 @@ bottling-supply-com
 retailer1-supply-com
 retailer2-supply-com
 
+docker run -d --network supplychain --name peer1.distillery.supply.com.couchdb -p 4369:4369/tcp -p 5984:5984/tcp -p 9100:9100/tcp -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=adminpw -v peer1.distillery.supply.com.couchdb:/opt/couchdb/data --hostname peer1.distillery.supply.com.couchdb hyperledger/fabric-couchdb:latest
 
 
-./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -r true -e true
+./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -r true 
 
 ./supplyflow netup -o distillery.supply.com -s couchdb -n supplyflow -e true
 
@@ -45,16 +46,16 @@ Order=$( echo '{"BarleyOrderID":"222","Size":"5OKilo", "Producer":"NA", "QCPass"
 Order=$( echo '{"BarleyOrderID":"1234","Size":"5OKilo", "Producer":"distillery", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
 
 
-Order=$( echo '{"BarleyOrderID":"111","Size":"49Kilo", "Producer":"NA", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
+Order=$( echo '{"BarleyOrderID":"113","Size":"49Kilo", "Producer":"producer1", "QCPass":"NA", "Status":"NA", "Accepted":"NA"}' | base64 | tr -d \\n )
 
-./supplyflow invoke -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
+./supplyflow invoke -o distillery.supply.com -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
 
-./supplyflow query -p '"ReadBarleyOrder","222"' -t ''
+./supplyflow query -p '"ReadBarleyOrder","111"' -t ''
 
 
 Order=$( echo '{"BarleyOrderID":"222", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland"}' | base64 | tr -d \\n )
 
-Order=$( echo '{"BarleyOrderID":"111", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland"}' | base64 | tr -d \\n )
+Order=$( echo '{"BarleyOrderID":"113", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland", "Salt":"abcdefghijklmnopqrstuvwxyz"}' | base64 | tr -d \\n )
 
 
 ./supplyflow invoke -p '"ConfirmBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
