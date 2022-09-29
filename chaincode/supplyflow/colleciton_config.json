@@ -39,7 +39,7 @@
      "blockToLive":10000,
      "memberOnlyRead": true,
      "endorsementPolicy": {
-        "signaturePolicy": AND('hmrc-supply-com.member', 'distillery-supply-com.member')}
+        "signaturePolicy": "AND('hmrc-supply-com.member', 'distillery-supply-com.member')"}
    },
    {
      "name": "collectionPrivateRetailer1-Orders",
