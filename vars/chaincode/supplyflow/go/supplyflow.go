@@ -153,13 +153,6 @@ type HMRCPrivateModel struct {
 
 
 /**
-Test code used during chaincode development and testing
-of different functionalities . This would be removed in a
- production version.
-**/
-
-
-/**
 Method initiates the barley order from the malting mill to a supplier. 
 This includes MSP validation, integrity checking and blockchain updating.
 **/
