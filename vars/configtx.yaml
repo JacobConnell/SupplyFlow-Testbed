@@ -1,0 +1,345 @@
+---
+Organizations:
+  - &bottling-supply-com
+      Name: bottling-supply-com
+      ID: bottling-supply-com
+      MSPDir: keyfiles/peerOrganizations/bottling.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('bottling-supply-com.admin', 'bottling-supply-com.peer', 'bottling-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('bottling-supply-com.admin', 'bottling-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('bottling-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('bottling-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.bottling.supply.com
+        Port: 7051
+  - &distillery-supply-com
+      Name: distillery-supply-com
+      ID: distillery-supply-com
+      MSPDir: keyfiles/peerOrganizations/distillery.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin', 'distillery-supply-com.peer', 'distillery-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin', 'distillery-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('distillery-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.distillery.supply.com
+        Port: 7051
+      - Host: peer2.distillery.supply.com
+        Port: 7051
+  - &hmrc-supply-com
+      Name: hmrc-supply-com
+      ID: hmrc-supply-com
+      MSPDir: keyfiles/peerOrganizations/hmrc.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('hmrc-supply-com.admin', 'hmrc-supply-com.peer', 'hmrc-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('hmrc-supply-com.admin', 'hmrc-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('hmrc-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('hmrc-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.hmrc.supply.com
+        Port: 7051
+  - &malting-supply-com
+      Name: malting-supply-com
+      ID: malting-supply-com
+      MSPDir: keyfiles/peerOrganizations/malting.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('malting-supply-com.admin', 'malting-supply-com.peer', 'malting-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('malting-supply-com.admin', 'malting-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('malting-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('malting-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.malting.supply.com
+        Port: 7051
+      - Host: peer2.malting.supply.com
+        Port: 7051
+  - &maturation-supply-com
+      Name: maturation-supply-com
+      ID: maturation-supply-com
+      MSPDir: keyfiles/peerOrganizations/maturation.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('maturation-supply-com.admin', 'maturation-supply-com.peer', 'maturation-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('maturation-supply-com.admin', 'maturation-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('maturation-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('maturation-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.maturation.supply.com
+        Port: 7051
+  - &producer1-supply-com
+      Name: producer1-supply-com
+      ID: producer1-supply-com
+      MSPDir: keyfiles/peerOrganizations/producer1.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('producer1-supply-com.admin', 'producer1-supply-com.peer', 'producer1-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('producer1-supply-com.admin', 'producer1-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('producer1-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('producer1-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.producer1.supply.com
+        Port: 7051
+  - &producer2-supply-com
+      Name: producer2-supply-com
+      ID: producer2-supply-com
+      MSPDir: keyfiles/peerOrganizations/producer2.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('producer2-supply-com.admin', 'producer2-supply-com.peer', 'producer2-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('producer2-supply-com.admin', 'producer2-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('producer2-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('producer2-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.producer2.supply.com
+        Port: 7051
+  - &retailer1-supply-com
+      Name: retailer1-supply-com
+      ID: retailer1-supply-com
+      MSPDir: keyfiles/peerOrganizations/retailer1.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('retailer1-supply-com.admin', 'retailer1-supply-com.peer', 'retailer1-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('retailer1-supply-com.admin', 'retailer1-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('retailer1-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('retailer1-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.retailer1.supply.com
+        Port: 7051
+  - &retailer2-supply-com
+      Name: retailer2-supply-com
+      ID: retailer2-supply-com
+      MSPDir: keyfiles/peerOrganizations/retailer2.supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('retailer2-supply-com.admin', 'retailer2-supply-com.peer', 'retailer2-supply-com.client')"
+        Writers:
+          Type: Signature
+          Rule: "OR('retailer2-supply-com.admin', 'retailer2-supply-com.client')"
+        Admins:
+          Type: Signature
+          Rule: "OR('retailer2-supply-com.admin')"
+        Endorsement:
+          Type: Signature
+          Rule: "OR('retailer2-supply-com.peer')"
+
+      AnchorPeers:
+      - Host: peer1.retailer2.supply.com
+        Port: 7051
+  - &supply-com
+      Name: supply-com
+      ID: supply-com
+      MSPDir: keyfiles/ordererOrganizations/supply.com/msp
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('supply-com.member')"
+        Writers:
+          Type: Signature
+          Rule: "OR('supply-com.member')"
+        Admins:
+          Type: Signature
+          Rule: "OR('supply-com.admin')"
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+
+  Orderer: &OrdererCapabilities
+    V2_0: true
+
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+
+  BatchTimeout: 2s
+
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+
+  Addresses:
+  - orderer1.supply.com:7050
+  - orderer2.supply.com:7050
+  - orderer3.supply.com:7050
+  EtcdRaft:
+    Consenters:
+    - Host: orderer1.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer1.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer1.supply.com/tls/server.crt
+    - Host: orderer2.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer2.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer2.supply.com/tls/server.crt
+    - Host: orderer3.supply.com
+      Port: 7050
+      ClientTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer3.supply.com/tls/server.crt
+      ServerTLSCert: keyfiles/ordererOrganizations/supply.com/orderers/orderer3.supply.com/tls/server.crt
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  OrgChannel:
+    Consortium: SampleConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+      - *bottling-supply-com
+      - *distillery-supply-com
+      - *hmrc-supply-com
+      - *malting-supply-com
+      - *maturation-supply-com
+      - *producer1-supply-com
+      - *producer2-supply-com
+      - *retailer1-supply-com
+      - *retailer2-supply-com
+      Capabilities:
+        <<: *ApplicationCapabilities
+
+  OrdererGenesis:
+    <<: *ChannelDefaults
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+      - *supply-com
+      Capabilities:
+        <<: *OrdererCapabilities
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+      - <<: *supply-com
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+        - *bottling-supply-com
+        - *distillery-supply-com
+        - *hmrc-supply-com
+        - *malting-supply-com
+        - *maturation-supply-com
+        - *producer1-supply-com
+        - *producer2-supply-com
+        - *retailer1-supply-com
+        - *retailer2-supply-com

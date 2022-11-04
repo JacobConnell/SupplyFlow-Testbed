@@ -1,0 +1,103 @@
+{
+  "bottling-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.bottling.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "distillery-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.distillery.supply.com", "port": "7051" },
+           { "host": "peer2.distillery.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "hmrc-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.hmrc.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "malting-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.malting.supply.com", "port": "7051" },
+           { "host": "peer2.malting.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "maturation-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.maturation.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "producer1-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.producer1.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "producer2-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.producer2.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "retailer1-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.retailer1.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  },
+  "retailer2-supply-com": {
+    "AnchorPeers": {
+      "mod_policy": "Admins",
+      "value": {
+        "anchor_peers": [
+           { "host": "peer1.retailer2.supply.com", "port": "7051" }
+        ]
+      },
+      "version": "0"
+    }
+  }
+}

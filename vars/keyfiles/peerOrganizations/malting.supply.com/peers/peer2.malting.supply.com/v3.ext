@@ -1,0 +1,4 @@
+keyUsage = critical,digitalSignature
+basicConstraints = critical,CA:FALSE
+subjectAltName=IP: 10.127.227.108,DNS:peer2.malting.supply.com,DNS:peer2-malting-supply-com,DNS:localhost,IP:127.0.0.1
+authorityKeyIdentifier = keyid,issuer

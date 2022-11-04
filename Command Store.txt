@@ -9,6 +9,18 @@ retailer2-supply-com
 
 docker run -d --network supplychain --name peer1.distillery.supply.com.couchdb -p 4369:4369/tcp -p 5984:5984/tcp -p 9100:9100/tcp -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=adminpw -v peer1.distillery.supply.com.couchdb:/opt/couchdb/data --hostname peer1.distillery.supply.com.couchdb hyperledger/fabric-couchdb:latest
 
+/dev/cu.usbserial-14330
+
+docker run -d \
+  -p 8123:8123 \
+  --name homeassistant \
+  --privileged \
+  --device /dev/tty.usbserial-14330:/dev/tty.ZigBee \
+  --restart=unless-stopped \
+  -e TZ=Europe/London \
+  -v /Users/jacob/Desktop/Hub:/config \
+  ghcr.io/home-assistant/home-assistant:stable
+
 
 ./supplyflow up -o distillery.supply.com -c supplychain  -s couchdb -n supplyflow -r true 
 
@@ -26,7 +38,7 @@ docker run \
     prom/prometheus
 
 
-./supplyflow install -n supplyflow -r true -v 1.0
+./supplyflow install -n supplyflow -r true -v 1.7
 
 ./supplyflow approve,commit,initialize -p ''
 
@@ -38,6 +50,16 @@ Order=$( echo '{"BottleID":"1234","DutyTotal":"3.50", "PaymentID":"11223", "Salt
 Order=$( echo '{"ObjectType":"HMRCPrivateOrder","BottleID":"1234567891011","DutyTotal":"3.50", "PaymentID":"11223", "Salt":""}' | base64 | tr -d \\n )
 
 ./supplyflow invoke -p '"PrivateTest"' -t '{"InputJSON":"'$Order'"}'
+
+echo -n '{"ObjectType":"HMRCPrivateOrder","BottleID":"1234567891011","DutyTotal":"3.50", "PaymentID":"11223", "Salt":""}' | shasum -a 256 )
+69ed0802b5e8c09fc809680d4981fe86de7078ca6232dce048133e1a555f8c6a  -
+
+(base) jacob@Macbook-2 Supply.com %  ./supplyflow query -p '"PrivateTestRead","1234567891011"' -t ''
+2283bd47324ecf4943d454308393c9ac95241b6d5f9ead22c6fa01bc531f1aba
+
+The Data is 7b22426f74746c654944223a2231323334353637383931303131222c2244757479546f74616c223a302c225061796d656e744944223a223131323233222c2253616c74223a22222c22646f6354797065223a22484d5243507269766174654f72646572227d
+{\"BottleID\":\"1234567891011\",\"DutyTotal\":0,\"PaymentID\":\"11223\",\"Salt\":\"\",\"docType\":\"HMRCPrivateOrder\"}
+91d6423c8de6e8f475f2725438151716eb910f502c2521d70235901e7390bbe2
 
 #Test Private Store Code End
 
@@ -51,7 +73,6 @@ Order=$( echo '{"BarleyOrderID":"113","Size":"49Kilo", "Producer":"producer1", "
 ./supplyflow invoke -o distillery.supply.com -p '"InitBarleyOrder"' -t '{"InputJSON":"'$Order'"}'
 
 ./supplyflow query -p '"ReadBarleyOrder","111"' -t ''
-
 
 Order=$( echo '{"BarleyOrderID":"222", "Status":"Will Do", "Price":2, "InvoiceID":1234, "SoilPH":"7.2", "GeoLocation":"Scotland"}' | base64 | tr -d \\n )
 

@@ -1,0 +1,368 @@
+{
+  "name": "fabric-network",
+  "description": "Generated network configuration file",
+  "version": "0.1",
+  "client": {
+    "organization": "distillery.supply.com",
+    "credentialStore": {
+      "path": "/tmp/hfc-kvs",
+      "cryptoStore": {
+        "path": "/tmp/hfc-cvs"
+      },
+      "wallet": "wallet-name"
+    }
+  },
+  "organizations": {
+    "bottling.supply.com": {
+      "mspid": "bottling-supply-com",
+      "peers": [
+        "peer1.bottling.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/bottling.supply.com/users/Admin@bottling.supply.com/msp/signcerts/Admin@bottling.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/bottling.supply.com/users/Admin@bottling.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "distillery.supply.com": {
+      "mspid": "distillery-supply-com",
+      "peers": [
+        "peer1.distillery.supply.com",
+        "peer2.distillery.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/distillery.supply.com/users/Admin@distillery.supply.com/msp/signcerts/Admin@distillery.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/distillery.supply.com/users/Admin@distillery.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "hmrc.supply.com": {
+      "mspid": "hmrc-supply-com",
+      "peers": [
+        "peer1.hmrc.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/hmrc.supply.com/users/Admin@hmrc.supply.com/msp/signcerts/Admin@hmrc.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/hmrc.supply.com/users/Admin@hmrc.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "malting.supply.com": {
+      "mspid": "malting-supply-com",
+      "peers": [
+        "peer1.malting.supply.com",
+        "peer2.malting.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/malting.supply.com/users/Admin@malting.supply.com/msp/signcerts/Admin@malting.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/malting.supply.com/users/Admin@malting.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "maturation.supply.com": {
+      "mspid": "maturation-supply-com",
+      "peers": [
+        "peer1.maturation.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/maturation.supply.com/users/Admin@maturation.supply.com/msp/signcerts/Admin@maturation.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/maturation.supply.com/users/Admin@maturation.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "producer1.supply.com": {
+      "mspid": "producer1-supply-com",
+      "peers": [
+        "peer1.producer1.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/producer1.supply.com/users/Admin@producer1.supply.com/msp/signcerts/Admin@producer1.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/producer1.supply.com/users/Admin@producer1.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "producer2.supply.com": {
+      "mspid": "producer2-supply-com",
+      "peers": [
+        "peer1.producer2.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/producer2.supply.com/users/Admin@producer2.supply.com/msp/signcerts/Admin@producer2.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/producer2.supply.com/users/Admin@producer2.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "retailer1.supply.com": {
+      "mspid": "retailer1-supply-com",
+      "peers": [
+        "peer1.retailer1.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/retailer1.supply.com/users/Admin@retailer1.supply.com/msp/signcerts/Admin@retailer1.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/retailer1.supply.com/users/Admin@retailer1.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "retailer2.supply.com": {
+      "mspid": "retailer2-supply-com",
+      "peers": [
+        "peer1.retailer2.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/peerOrganizations/retailer2.supply.com/users/Admin@retailer2.supply.com/msp/signcerts/Admin@retailer2.supply.com-cert.pem",
+          "private_key": "/keyfiles/peerOrganizations/retailer2.supply.com/users/Admin@retailer2.supply.com/msp/keystore/priv_sk"
+        }
+      }
+    },
+    "supply.com": {
+      "mspid": "supply-com",
+      "orderers": [
+        "orderer1.supply.com",
+        "orderer2.supply.com",
+        "orderer3.supply.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/keyfiles/ordererOrganizations/supply.com/users/Admin@supply.com/msp/signcerts/Admin@supply.com-cert.pem",
+          "private_key": "/keyfiles/ordererOrganizations/supply.com/users/Admin@supply.com/msp/keystore/priv_sk"
+        }
+      }
+    }
+  },
+  "orderers": {
+    "orderer1.supply.com": {
+      "url": "orderer1.supply.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer1.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/ordererOrganizations/supply.com/orderers/orderer1.supply.com/tls/ca.crt"
+      }
+    },
+    "orderer2.supply.com": {
+      "url": "orderer2.supply.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer2.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/ordererOrganizations/supply.com/orderers/orderer2.supply.com/tls/ca.crt"
+      }
+    },
+    "orderer3.supply.com": {
+      "url": "orderer3.supply.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer3.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/ordererOrganizations/supply.com/orderers/orderer3.supply.com/tls/ca.crt"
+      }
+    }
+  },
+  "peers": {
+    "peer1.distillery.supply.com": {
+      "url": "peer1.distillery.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.distillery.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/distillery.supply.com/peers/peer1.distillery.supply.com/tls/ca.crt"
+      }
+    },
+    "peer2.distillery.supply.com": {
+      "url": "peer2.distillery.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer2.distillery.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/distillery.supply.com/peers/peer2.distillery.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.producer1.supply.com": {
+      "url": "peer1.producer1.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.producer1.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/producer1.supply.com/peers/peer1.producer1.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.producer2.supply.com": {
+      "url": "peer1.producer2.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.producer2.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/producer2.supply.com/peers/peer1.producer2.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.malting.supply.com": {
+      "url": "peer1.malting.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.malting.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/malting.supply.com/peers/peer1.malting.supply.com/tls/ca.crt"
+      }
+    },
+    "peer2.malting.supply.com": {
+      "url": "peer2.malting.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer2.malting.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/malting.supply.com/peers/peer2.malting.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.bottling.supply.com": {
+      "url": "peer1.bottling.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.bottling.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/bottling.supply.com/peers/peer1.bottling.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.maturation.supply.com": {
+      "url": "peer1.maturation.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.maturation.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/maturation.supply.com/peers/peer1.maturation.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.retailer1.supply.com": {
+      "url": "peer1.retailer1.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.retailer1.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/retailer1.supply.com/peers/peer1.retailer1.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.retailer2.supply.com": {
+      "url": "peer1.retailer2.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.retailer2.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/retailer2.supply.com/peers/peer1.retailer2.supply.com/tls/ca.crt"
+      }
+    },
+    "peer1.hmrc.supply.com": {
+      "url": "peer1.hmrc.supply.com:7051",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.hmrc.supply.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/hmrc.supply.com/peers/peer1.hmrc.supply.com/tls/ca.crt"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca1.distillery.supply.com": {
+      "url": "https://ca1.distillery.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/distillery.supply.com/ca/ca1.distillery.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.producer1.supply.com": {
+      "url": "https://ca1.producer1.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/producer1.supply.com/ca/ca1.producer1.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.producer2.supply.com": {
+      "url": "https://ca1.producer2.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/producer2.supply.com/ca/ca1.producer2.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.malting.supply.com": {
+      "url": "https://ca1.malting.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/malting.supply.com/ca/ca1.malting.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.bottling.supply.com": {
+      "url": "https://ca1.bottling.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/bottling.supply.com/ca/ca1.bottling.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.maturation.supply.com": {
+      "url": "https://ca1.maturation.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/maturation.supply.com/ca/ca1.maturation.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.retailer1.supply.com": {
+      "url": "https://ca1.retailer1.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/retailer1.supply.com/ca/ca1.retailer1.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.retailer2.supply.com": {
+      "url": "https://ca1.retailer2.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/retailer2.supply.com/ca/ca1.retailer2.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    },
+    "ca1.hmrc.supply.com": {
+      "url": "https://ca1.hmrc.supply.com:7054",
+      "tlsCACerts": {
+        "path": "/keyfiles/peerOrganizations/hmrc.supply.com/ca/ca1.hmrc.supply.com-cert.pem"
+      },
+      "httpOptions": { "verify": "false" },
+      "caName": "ca1",
+      "registrar": { "enrollId": "admin", "enrollSecret": "adminpw" }
+    }
+  }
+}
